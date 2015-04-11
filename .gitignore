@@ -1,0 +1,9 @@
+dist/
+build/
+
+.idea/
+node_modules/
+config.env.production
+dist.zip
+test.js
+config.json
