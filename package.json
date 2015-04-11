@@ -1,9 +1,9 @@
 {
-  "name": "videoboard-lambda-ffmpeg",
+  "name": "aws-lambda-ffmpeg",
   "version": "0.0.0",
   "private": true,
-  "description": "AWS Lambda function to create thumbnails",
-  "main": "CreateThumbnail.js",
+  "description": "AWS Lambda function to resize video and generate a thumbnail",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -13,7 +13,7 @@
     "ffmpeg"
   ],
   "author": "Barrett Harber",
-  "license": "ISC",
+  "license": "Unlicense",
   "devDependencies": {
     "del": "^1.1.1",
     "gulp": "^3.8.11",
