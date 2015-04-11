@@ -94,7 +94,7 @@ lambda({
 			s3SchemaVersion: '1.0',
 			configurationId: 'ProcessUploads',
 			bucket: {
-				name: 'videoboard-upload',
+				name: 'source-bucket',
 				ownerIdentity: {principalId: 'XXXXXXXXXXXXXX'},
 				arn: 'arn:aws:s3:::source-bucket'
 			},
@@ -116,4 +116,5 @@ lambda({
 ```
 
 # Gotchas
-The object key from the event is URL encoded. Spaces in the filenames might be replaced with `+` so be aware of this and handle errors appropriately. If you try to download the file with the AWS SDK for JavaScript like in this example, without handling this, it will throw an error.
+- The object key from the event is URL encoded. Spaces in the filenames might be replaced with `+` so be aware of this and handle errors appropriately. If you try to download the file with the AWS SDK for JavaScript like in this example, without handling this, it will throw an error.
+- Not handling errors with context.done() will cause the function to run until the timeout is reached. 
