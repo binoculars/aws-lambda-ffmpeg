@@ -61,7 +61,8 @@ Downloads the file that gets uploaded to the source bucket, streams it through F
 {
 	"videoMaxWidth": 320,
 	"destinationBucket": "destination-bucket",
-	"linkPrefix": "http://my.site/"
+	"linkPrefix": "http://my.site/",
+    "gzip": true
 }
 ```
 
@@ -106,15 +107,15 @@ lambda({
 		}
 	}]
 }, {
-	done: function (err) {
-		if (err)
-			console.log(err);
-		else
-			console.log('ALL DONE');
+	fail: function (error) {
+		console.log('Failed:', error);
+	},
+	succeed: function(result) {
+		console.log('Succeeded:', result);
 	}
 });
 ```
 
 # Gotchas
 - The object key from the event is URL encoded. Spaces in the filenames might be replaced with `+` so be aware of this and handle errors appropriately. If you try to download the file with the AWS SDK for JavaScript like in this example, without handling this, it will throw an error.
-- Not handling errors with context.done() will cause the function to run until the timeout is reached. 
+- Not handling errors with context.fail(error) will cause the function to run until the timeout is reached. 

@@ -1,11 +1,10 @@
 var child_process = require('child_process');
 var fs = require('fs');
 var util = require('util');
-
+var zlib = require('zlib');
 var AWS = require('aws-sdk');
 var async = require('async');
 var uuid = require('uuid');
-
 var config = require('./config');
 var scaleFilter = "scale='min(" + config.videoMaxWidth.toString() + "\\,iw):-2'";
 
@@ -18,19 +17,37 @@ function downloadStream(bucket, file, context) {
 	});
 
 	req.on('error', function(res) {
-		return context.done('S3 download error:', res);
+		return context.fail('S3 download error: ' + JSON.stringify(res));
 	});
 
 	return req.createReadStream();
 }
 
 function uploadFile(cb, filename, bucket, key, contentType) {
-	s3.putObject({
+	var readStream = fs.createReadStream(filename);
+
+	var params = {
 		Bucket: bucket,
 		Key: key,
-		Body: fs.createReadStream(filename),
 		ContentType: contentType
-	}, cb);
+	};
+
+	if (config.gzip) {
+		params.Body = readStream.pipe(
+			zlib.createGzip({
+				level: zlib.Z_BEST_COMPRESSION
+			})
+		);
+		params.ContentEncoding = 'gzip';
+	} else {
+		params.Body = readStream;
+	}
+
+	s3.upload(params)
+		.on('httpUploadProgress', function(evt) {
+			console.log(filename, 'Progress:', evt.loaded, '/', evt.total);
+		})
+		.send(cb);
 }
 
 function getffmpeg(dstBucket, keyPrefix, description, context) {
@@ -41,7 +58,6 @@ function getffmpeg(dstBucket, keyPrefix, description, context) {
 		[
 			'-y',
 			'-loglevel', 'warning',
-			'-threads', '2',
 			'-i', '-',
 			'-vf', scaleFilter,
 			'-movflags', '+faststart',
@@ -62,7 +78,7 @@ function getffmpeg(dstBucket, keyPrefix, description, context) {
 		console.log('ffmpeg done');
 
 		if (code)
-			return context.done('ffmpeg Error', 'code:', code, 'signal:', signal);
+			return context.fail('ffmpeg Error code:' + code.toString() + 'signal:' + signal.toString());
 
 		async.parallel(
 			[
@@ -76,8 +92,11 @@ function getffmpeg(dstBucket, keyPrefix, description, context) {
 				}
 			],
 			function (err, results) {
+				if (err)
+					context.fail('Uploads failed' + err + ' ' + JSON.stringify(results));
+
 				console.log('Uploads finished', results);
-				context.done(err);
+				context.succeed();
 			}
 		);
 	});
@@ -97,7 +116,7 @@ exports.handler = function(event, context) {
 	// http://stackoverflow.com/questions/27708573/aws-lambda-making-video-thumbnails
 	child_process.exec('cp /var/task/ffmpeg /tmp/.; chmod 755 /tmp/ffmpeg;', function(error, stdout, stderr) {
 		if (error)
-			return context.done('Error', error);
+			return context.fail('Error', error);
 
 		console.log("Reading options from event:\n", util.inspect(event, {depth: 5}));
 		var srcBucket = event.Records[0].s3.bucket.name;
