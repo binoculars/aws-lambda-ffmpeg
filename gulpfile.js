@@ -27,7 +27,7 @@ gulp.task('download-ffmpeg', function(cb) {
 });
 
 gulp.task('untar-ffmpeg', shell.task([
-	'tar xvf ' + filename + ' -C ./build'
+	'tar -xvf ' + filename + ' -C ./build'
 ]));
 
 // This is still buggy
