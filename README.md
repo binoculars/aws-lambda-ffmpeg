@@ -120,4 +120,4 @@ lambda({
 
 # Gotchas
 - The object key from the event is URL encoded. Spaces in the filenames might be replaced with `+` so be aware of this and handle errors appropriately. If you try to download the file with the AWS SDK for JavaScript like in this example, without handling this, it will throw an error.
-- Not handling errors with context.fail(error) will cause the function to run until the timeout is reached. 
+- Not handling errors with `context.fail(error)` will cause the function to run until the timeout is reached. 
