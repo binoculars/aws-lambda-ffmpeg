@@ -31,10 +31,11 @@ gulp.task('untar-ffmpeg', shell.task([
 ]));
 
 // This is still buggy
-gulp.task('copy-ffmpeg', ['download-ffmpeg', 'untar-ffmpeg'], function() {
-	gulp.src('build/ffmpeg-*/ffmpeg')
+gulp.task('copy-ffmpeg', function(cb) {
+	gulp.src(['build/ffmpeg-*/ffmpeg', 'build/ffmpeg-*/ffprobe'])
 		.pipe(flatten())
 		.pipe(gulp.dest('./dist'));
+	cb();
 });
 
 /*
@@ -43,11 +44,10 @@ gulp.task('copy-ffmpeg', ['download-ffmpeg', 'untar-ffmpeg'], function() {
 
 // First we need to clean out the dist folder and remove the compiled zip file.
 gulp.task('clean', function(cb) {
-	//del('./build/*');
+	del('./build/*');
 	del('./dist',
 		del('./dist.zip', cb)
 	);
-
 });
 
 // The js task could be replaced with gulp-coffee as desired.
@@ -130,6 +130,8 @@ gulp.task('upload', function() {
 gulp.task('default', function(callback) {
 	return runSequence(
 		['clean'],
+		['download-ffmpeg'],
+		['untar-ffmpeg'],
 		['copy-ffmpeg'],
 		['js', 'npm', 'env'],
 		['zip'],

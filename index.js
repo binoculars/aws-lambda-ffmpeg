@@ -21,6 +21,7 @@ function downloadStream(bucket, file, cb) {
 	});
 
 	req.on('error', function(res) {
+		req.end();
 		cb('S3 download error: ' + JSON.stringify(res));
 	});
 
@@ -91,6 +92,62 @@ function uploadFile(fileExt, id, bucket, keyPrefix, contentType, cb) {
 	;
 }
 
+function ffprobeVerify(cb) {
+	console.log('starting ffprobe');
+
+	var ffprobe = child_process.execFile(
+		process.env.ffprobe || '/tmp/ffprobe',
+		[
+			'-v', 'quiet',
+			'-print_format', 'json',
+			'-show_format',
+			'-show_streams',
+			'-i', '-'
+		],
+		{
+			cwd: '/tmp',
+			stdio: [null, null, null, 'pipe']
+		}
+	);
+
+	var output = '';
+
+	ffprobe.stdout.on('data', function (data) {
+		output += data;
+	});
+
+	ffprobe.stdin.on('error', function() {
+		// Handling EPIPE errors. This is a weird, unfixed bug... apparently
+		// https://github.com/joyent/node/issues/7481
+		console.log('ffprobe stdin error');
+	});
+
+	ffprobe.on('exit', function(code, signal) {
+		console.log('ffprobe done');
+
+		if (code)
+			return cb('ffprobe Error code: ' + code + ', signal: ' + signal);
+		else {
+			var outputObj = JSON.parse(output);
+			var maxDuration = config.videoMaxDuration;
+
+			var hasVideoStream = outputObj.streams.some(function(stream) {
+				return stream.codec_type === 'video' && stream.duration <= maxDuration;
+			});
+
+			if (!hasVideoStream)
+				return cb('no valid video stream found');
+			else {
+				console.log('valid video stream found');
+				return cb(null, 'ffprobe finished');
+			}
+		}
+
+	});
+
+	return ffprobe;
+}
+
 function ffmpegProcess(description, cb) {
 	console.log('starting ffmpeg');
 
@@ -119,9 +176,9 @@ function ffmpegProcess(description, cb) {
 		console.log('ffmpeg done');
 
 		if (code)
-			return cb('ffmpeg Error code:' + code.toString() + 'signal:' + signal.toString());
+			return cb('ffmpeg Error code: ' + code + ', signal: ' + signal);
 		else
-			cb();
+			cb(null, 'ffmpeg finished');
 	});
 
 	return ffmpeg;
@@ -136,13 +193,32 @@ function buffer2shorturl(id) {
 }
 
 function processVideo(s3Event, srcKey, id, cb) {
-	downloadStream(s3Event.bucket.name, srcKey, cb)
-		.pipe(ffmpegProcess(config.linkPrefix + buffer2shorturl(id), cb).stdio[0]);
+	var dlFile = '/tmp/download';
+
+	async.series([
+		function(cb) {
+			var dlStream = downloadStream(s3Event.bucket.name, srcKey, cb);
+			dlStream.on('end', function() {
+				cb(null, 'download finished');
+			});
+			dlStream.pipe(fs.createWriteStream(dlFile));
+		},
+		function(cb) {
+			fs.createReadStream(dlFile).pipe(ffprobeVerify(cb).stdin);
+		},
+		function(cb) {
+			fs.createReadStream(dlFile).pipe(ffmpegProcess(config.linkPrefix + buffer2shorturl(id), cb).stdin);
+		},
+		function(cb) {
+			console.log('Deleting download file');
+			fs.unlink(dlFile, cb);
+		}
+	], cb);
 }
 
 function copyffmpeg(cb) {
 	// http://stackoverflow.com/questions/27708573/aws-lambda-making-video-thumbnails
-	child_process.exec('cp /var/task/ffmpeg /tmp/.; chmod 755 /tmp/ffmpeg;', cb);
+	child_process.exec('cp /var/task/ff* /tmp/.; chmod 755 /tmp/ff*;', cb);
 }
 
 exports.handler = function(event, context) {

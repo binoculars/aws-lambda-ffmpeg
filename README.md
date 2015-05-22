@@ -1,5 +1,5 @@
 # Description
-An [AWS Lambda](http://aws.amazon.com/lambda/) function that resizes videos and outputs thumbnail using [FFmpeg](https://www.ffmpeg.org/).
+An [AWS Lambda](http://aws.amazon.com/lambda/) function that resizes videos and outputs thumbnails using [FFmpeg](https://www.ffmpeg.org/).
 
 ## Setup
 1. Install node.js, preferably through [nvm](/creationix/nvm). Lambda uses an older version of node (currently v0.10.33), so it would be best use the same version--especially when installing dependencies via npm.
@@ -60,6 +60,7 @@ Downloads the file that gets uploaded to the source bucket, streams it through F
 ```JSON
 {
 	"videoMaxWidth": 320,
+	"videoMaxDuration": 15,
 	"destinationBucket": "destination-bucket",
 	"linkPrefix": "http://my.site/",
     "gzip": true
