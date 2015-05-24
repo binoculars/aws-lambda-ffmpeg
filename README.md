@@ -12,9 +12,16 @@ An [AWS Lambda](http://aws.amazon.com/lambda/) function that resizes videos and 
 1. Invoke the lambda function by uploading a video to your source bucket or run it manually in the AWS console.
 
 ## Gulp
-See Adam Neary's (@adamrneary) [A Gulp Workflow for Amazon Lambda](https://medium.com/@AdamRNeary/a-gulp-workflow-for-amazon-lambda-61c2afd723b6)
+See Adam Neary's ([@adamrneary](https://github.com/adamrneary)) [A Gulp Workflow for Amazon Lambda](https://medium.com/@AdamRNeary/a-gulp-workflow-for-amazon-lambda-61c2afd723b6)
 
-There are a few more Gulp tasks to download, extract, and copy the 64-bit linux build of FFmpeg from John Van Sickle's [FFmpeg builds site](http://johnvansickle.com/ffmpeg/). Run these tasks individually. I'm not an expert on Gulp and they don't seem to work when used together.
+There are a few more Gulp tasks to download, extract, and copy the 64-bit linux build of FFmpeg from John Van Sickle's [FFmpeg builds site](http://johnvansickle.com/ffmpeg/).
+
+The default gulp task will run all of the tasks (except for upload... for now). This will result in the following actions:
+* Cleans the build directory, dist directory, and dist.zip
+* Downloads, extracts, and copies FFmpeg and FFprobe to the dist directory
+* Copies the index.js and config.json file to the dist directory
+* Runs npm install in the dist directory (excludes dev dependencies)
+* Zips everything into dist.zip. This file is what you will upload to AWS Lambda for execution.
 
 # AWS Configuration
 Just need to set up the S3 buckets and Upload the Lambda function (dist.zip).
