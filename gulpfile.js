@@ -1,22 +1,21 @@
 var http = require('http');
 var fs = require('fs');
-
 var gulp = require('gulp');
 var shell = require('gulp-shell');
 var flatten = require('gulp-flatten');
 var gutil = require('gulp-util');
 var del = require('del');
-var rename = require('gulp-rename');
 var install = require('gulp-install');
 var zip = require('gulp-zip');
 var AWS = require('aws-sdk');
 var runSequence = require('run-sequence');
 
 var filename = './build/ffmpeg-git-64bit-static.tar.xz';
+var fileURL = 'http://johnvansickle.com/ffmpeg/builds/ffmpeg-git-64bit-static.tar.xz';
 
 gulp.task('download-ffmpeg', function(cb) {
 	var file = fs.createWriteStream(filename);
-	http.get('http://johnvansickle.com/ffmpeg/builds/ffmpeg-git-64bit-static.tar.xz', function(response) {
+	http.get(fileURL, function(response) {
 		response.pipe(file);
 
 		file.on('finish', function() {
@@ -26,16 +25,17 @@ gulp.task('download-ffmpeg', function(cb) {
 	});
 });
 
+// Resorting to using a shell task. Tried a number of other things including
+// LZMA-native, node-xz, decompress-tarxz. None of them work very well with this.
+// This will probably work well for OS X and Linux, but maybe not Windows without Cygwin.
 gulp.task('untar-ffmpeg', shell.task([
 	'tar -xvf ' + filename + ' -C ./build'
 ]));
 
-// This is still buggy
-gulp.task('copy-ffmpeg', function(cb) {
-	gulp.src(['build/ffmpeg-*/ffmpeg', 'build/ffmpeg-*/ffprobe'])
+gulp.task('copy-ffmpeg', function() {
+	return gulp.src(['build/ffmpeg-*/ffmpeg', 'build/ffmpeg-*/ffprobe'])
 		.pipe(flatten())
 		.pipe(gulp.dest('./dist'));
-	cb();
 });
 
 /*
@@ -44,39 +44,32 @@ gulp.task('copy-ffmpeg', function(cb) {
 
 // First we need to clean out the dist folder and remove the compiled zip file.
 gulp.task('clean', function(cb) {
-	del('./build/*');
-	del('./dist',
-		del('./dist.zip', cb)
-	);
+	del([
+		'./build/*',
+		'./dist/*',
+		'./dist.zip'
+	], cb);
 });
 
 // The js task could be replaced with gulp-coffee as desired.
 gulp.task('js', function() {
-	gulp.src(['index.js', 'config.json'])
-		.pipe(gulp.dest('dist/'))
+	return gulp.src(['index.js', 'config.json'])
+		.pipe(gulp.dest('./dist'))
 });
 
 // Here we want to install npm packages to dist, ignoring devDependencies.
 gulp.task('npm', function() {
-	gulp.src('./package.json')
-		.pipe(gulp.dest('./dist/'))
-		.pipe(install({production: true}));
-});
-
-// Next copy over environment variables managed outside of source control.
-gulp.task('env', function() {
-	gulp.src('./config.env.production')
-		.pipe(rename('.env'))
+	return gulp.src('./package.json')
 		.pipe(gulp.dest('./dist'))
+		.pipe(install({production: true}));
 });
 
 // Now the dist directory is ready to go. Zip it.
 gulp.task('zip', function() {
-	gulp.src(['dist/**/*', '!dist/package.json', 'dist/.*'])
+	return gulp.src(['dist/**/*', '!dist/package.json', 'dist/.*'])
 		.pipe(zip('dist.zip'))
 		.pipe(gulp.dest('./'));
 });
-
 
 // Per the gulp guidelines, we do not need a plugin for something that can be
 // done easily with an existing node module. #CodeOverConfig
@@ -132,10 +125,9 @@ gulp.task('default', function(callback) {
 		['clean'],
 		['download-ffmpeg'],
 		['untar-ffmpeg'],
-		['copy-ffmpeg'],
-		['js', 'npm', 'env'],
+		['copy-ffmpeg', 'js', 'npm'],
 		['zip'],
-		//['upload'],
+		//['upload'], // TODO: Enable this after testing
 		callback
 	);
 });
