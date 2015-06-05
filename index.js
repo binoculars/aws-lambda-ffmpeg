@@ -9,8 +9,9 @@ var async = require('async');
 var uuid = require('uuid');
 var config = require('./config');
 var scaleFilter = "scale='min(" + config.videoMaxWidth.toString() + "\\,iw):-2'";
-
 var s3 = new AWS.S3();
+
+process.env['PATH'] += ':' + process.env['LAMBDA_TASK_ROOT'];
 
 function downloadStream(bucket, file, cb) {
 	console.log('Starting download');
@@ -96,7 +97,7 @@ function ffprobeVerify(cb) {
 	console.log('starting ffprobe');
 
 	var ffprobe = child_process.execFile(
-		process.env.ffprobe || '/tmp/ffprobe',
+		'ffprobe',
 		[
 			'-v', 'quiet',
 			'-print_format', 'json',
@@ -152,7 +153,7 @@ function ffmpegProcess(description, cb) {
 	console.log('starting ffmpeg');
 
 	var ffmpeg = child_process.execFile(
-		process.env.ffmpeg || '/tmp/ffmpeg',
+		'ffmpeg',
 		[
 			'-y',
 			'-loglevel', 'warning',
@@ -216,36 +217,26 @@ function processVideo(s3Event, srcKey, id, cb) {
 	], cb);
 }
 
-function copyffmpeg(cb) {
-	// http://stackoverflow.com/questions/27708573/aws-lambda-making-video-thumbnails
-	child_process.exec('cp /var/task/ff* /tmp/.; chmod 755 /tmp/ff*;', cb);
-}
-
 exports.handler = function(event, context) {
 	console.log("Reading options from event:\n", util.inspect(event, {depth: 5}));
 
+	var s3Event = event.Records[0].s3;
+	var srcKey = decodeURIComponent(s3Event.object.key);
+	var keyPrefix = srcKey.replace(/\.[^/.]+$/, '');
+	// Key structure on source bucket is 3 folders deep with a UUID filename
+	var splitPrefix = keyPrefix.split('/');
+	var id = new Buffer(uuid.parse(splitPrefix[2]));
+
 	async.series([
-		copyffmpeg,
-		function(cb) {
-			var s3Event = event.Records[0].s3;
-			var srcKey = decodeURIComponent(s3Event.object.key);
-			var keyPrefix = srcKey.replace(/\.[^/.]+$/, '');
-
-			// Key structure on source bucket is 3 folders deep with a UUID filename
-			var splitPrefix = keyPrefix.split('/');
-			var id = new Buffer(uuid.parse(splitPrefix[2]));
-
-			async.series([
-				function (cb) { processVideo(s3Event, srcKey, id, cb); },
-				function (cb) {
-					var dstBucket = config.destinationBucket;
-					async.parallel([
-						function (cb) { uploadFile('mp4', id,  dstBucket, keyPrefix, 'video/mp4', cb); },
-						function (cb) { uploadFile('png', null, dstBucket, keyPrefix, 'image/png', cb); }
-					], cb);
-				}
+		function (cb) { processVideo(s3Event, srcKey, id, cb); },
+		function (cb) {
+			var dstBucket = config.destinationBucket;
+			async.parallel([
+				function (cb) { uploadFile('mp4', id,  dstBucket, keyPrefix, 'video/mp4', cb); },
+				function (cb) { uploadFile('png', null, dstBucket, keyPrefix, 'image/png', cb); }
 			], cb);
-		}], function(err, results) {
+		}
+	], function(err, results) {
 		if (err) context.fail(err);
 		else context.succeed(util.inspect(results, {depth: 5}));
 	});
