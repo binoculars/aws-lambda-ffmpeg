@@ -16,17 +16,13 @@ process.env['PATH'] += ':' + process.env['LAMBDA_TASK_ROOT'];
 function downloadStream(bucket, file, cb) {
 	console.log('Starting download');
 
-	var req = s3.getObject({
+	return s3.getObject({
 		Bucket: bucket,
 		Key: file
-	});
-
-	req.on('error', function(res) {
+	}).on('error', function(res) {
 		req.end();
 		cb('S3 download error: ' + JSON.stringify(res));
-	});
-
-	return req.createReadStream();
+	}).createReadStream();
 }
 
 function s3upload(params, filename, cb) {
