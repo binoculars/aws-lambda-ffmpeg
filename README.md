@@ -22,6 +22,7 @@ The default gulp task will run all of the tasks (except for upload... for now). 
 * Copies the index.js and config.json file to the dist directory
 * Runs npm install in the dist directory (excludes dev dependencies)
 * Zips everything into dist.zip. This file is what you will upload to AWS Lambda for execution.
+* Uploads the function to AWS (must create config.json first and have your AWS credentials set as environment variables).
 
 # AWS Configuration
 Just need to set up the S3 buckets and Upload the Lambda function (dist.zip).
@@ -30,6 +31,8 @@ Just need to set up the S3 buckets and Upload the Lambda function (dist.zip).
 Downloads the file that gets uploaded to the source bucket, streams it through FFmpeg, outputs a scaled mp4 file and a png image, and then uploads both files to the destination bucket.  
 
 ### IAM Execution Role Policy
+This will be created by the gulp upload task by default.
+
 ```JSON
 {
     "Version": "2012-10-17",

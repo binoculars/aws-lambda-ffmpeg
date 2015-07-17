@@ -3,15 +3,31 @@ var fs = require('fs');
 var gulp = require('gulp');
 var shell = require('gulp-shell');
 var flatten = require('gulp-flatten');
-var gutil = require('gulp-util');
 var del = require('del');
 var install = require('gulp-install');
 var zip = require('gulp-zip');
 var AWS = require('aws-sdk');
 var runSequence = require('run-sequence');
+var async = require('async');
+var config = require('./config.json');
+var s3 = new AWS.S3();
 
 var filename = './build/ffmpeg-git-64bit-static.tar.xz';
 var fileURL = 'http://johnvansickle.com/ffmpeg/builds/ffmpeg-git-64bit-static.tar.xz';
+
+gulp.task('create-s3-buckets', function(cb) {
+	async.map(
+		[config.sourceBucket, config.destinationBucket],
+		function(bucketName, cb) {
+			s3.createBucket({Bucket: bucketName}, cb);
+		},
+		function(err, results) {
+			if (err) console.log(err);
+			else console.log(results);
+			cb();
+		}
+	);
+});
 
 gulp.task('download-ffmpeg', function(cb) {
 	var file = fs.createWriteStream(filename);
@@ -78,56 +94,135 @@ gulp.task('zip', function() {
 // the case if you have installed and configured the AWS CLI.
 //
 // See http://aws.amazon.com/sdk-for-node-js/
-gulp.task('upload', function() {
-	AWS.config.region = 'us-east-1';
-	var lambda = new AWS.Lambda();
-	var functionName = require('./package.json').name;
+var lambda = new AWS.Lambda();
+var iam = new AWS.IAM();
+var packageInfo = require('./package.json');
 
-	lambda.getFunction({FunctionName: functionName}, function(err, data) {
-		if (err) {
-			var warning;
-
-			if (err.statusCode === 404) {
-				warning = 'Unable to find lambda function ' + deploy_function
-				+ '. Verify the lambda function name and AWS region are correct.';
-			} else {
-				warning = 'AWS API request failed. Check your AWS credentials and permissions.';
-			}
-
-			gutil.log(warning);
-		}
-
-		// This is a bit silly, simply because these five parameters are required.
-		var current = data.Configuration;
+gulp.task('upload', function(cb) {
+	lambda.getFunction({
+		FunctionName: packageInfo.name
+	}, function(err, data) {
+		var lambdaConfig = data ? data.Configuration || {} : {};
 		var params = {
-			FunctionName: functionName,
-			Handler: current.Handler,
-			Mode: current.Mode,
-			Role: current.Role,
-			Runtime: current.Runtime
+			FunctionName: lambdaConfig.FunctionName || packageInfo.name,
+			Handler: lambdaConfig.Handler || 'index.handler',
+			Description: packageInfo.description,
+			MemorySize: 512,
+			Timeout: 30
 		};
 
-		fs.readFile('./dist.zip', function(err, data) {
-			params['FunctionZip'] = data;
-			lambda.uploadFunction(params, function(err, data) {
-				if (err) {
-					var warning = 'Package upload failed. ';
-					warning += 'Check your iam:PassRole permissions.';
-					gutil.log(warning);
+		if (err && err.statusCode === 404) {
+			async.waterfall([
+				function(cb) {
+					if (lambdaConfig.Role) {
+						params.Role = lambdaConfig.Role;
+						return cb();
+					} else {
+						async.waterfall([
+							function(cb) {
+								iam.createRole({
+									AssumeRolePolicyDocument: JSON.stringify({
+										"Version": "2012-10-17",
+										"Statement": [
+											{
+												"Effect": "Allow",
+												"Principal": {
+													"Service": "lambda.amazonaws.com"
+												},
+												"Action": "sts:AssumeRole"
+											}
+										]
+									}),
+									RoleName: packageInfo.name + '_execRole'
+								}, cb);
+							},
+							function(data, cb) {
+								params.Role = data.Role.Arn;
+								iam.putRolePolicy({
+									PolicyDocument: JSON.stringify({
+										"Version": "2012-10-17",
+										"Statement": [
+											{
+												"Effect": "Allow",
+												"Action": ["logs:*"],
+												"Resource": "arn:aws:logs:*:*:*"
+											},
+											{
+												"Effect": "Allow",
+												"Action": ["s3:GetObject"],
+												"Resource": ["arn:aws:s3:::" + config.sourceBucket + "/*"]
+											},
+											{
+												"Effect": "Allow",
+												"Action": ["s3:PutObject"],
+												"Resource": ["arn:aws:s3:::" + config.destinationBucket + "/*"]
+											}
+										]
+									}, null, '\t'),
+									PolicyName: data.Role.RoleName + '_policy',
+									RoleName: data.Role.RoleName
+								}, cb);
+							}
+						], cb);
+					}
+				},
+				function(data, cb) {
+					fs.readFile('./dist.zip', cb);
+				},
+				function(file, cb) {
+					params.Code = {ZipFile: file};
+					params.Runtime = 'nodejs';
+					lambda.createFunction(params, cb);
 				}
-			});
-		});
+			], cb);
+		} else {
+			async.waterfall([
+				function(cb) {
+					fs.readFile('./dist.zip', cb);
+				},
+				function(file, cb) {
+					lambda.updateFunctionCode({
+						FunctionName: params.FunctionName,
+						ZipFile: file
+					}, cb);
+				}
+			], cb);
+		}
 	});
 });
 
-gulp.task('default', function(callback) {
+gulp.task('configure-source-bucket-events', function(cb) {
+	async.waterfall([
+		function(cb) {
+			lambda.getFunctionConfiguration({
+				FunctionName: packageInfo.name
+			}, cb);
+		},
+		function(data, cb) {
+			s3.putBucketNotificationConfiguration({
+				Bucket: config.sourceBucket,
+				NotificationConfiguration: {
+					LambdaFunctionConfigurations: [
+						{
+							Events: ['s3:ObjectCreated:*'],
+							LambdaFunctionArn: data.FunctionArn,
+							Id: 'Process with ' + packageInfo.name
+						}
+					]
+				}
+			}, cb);
+		}
+	], cb);
+});
+
+gulp.task('default', function(cb) {
 	return runSequence(
 		['clean'],
 		['download-ffmpeg'],
 		['untar-ffmpeg'],
 		['copy-ffmpeg', 'js', 'npm'],
 		['zip'],
-		//['upload'], // TODO: Enable this after testing
-		callback
+		['upload'],
+		cb
 	);
 });
