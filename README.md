@@ -67,7 +67,7 @@ This will be created by the gulp upload task by default.
 ```
 
 ### config.json
-See [sample_config.json](sample_config.json). config.json will be copied after npm install.
+See [config_sample.json](config_sample.json). config.json will be copied after npm install.
 
 ```JSON
 {
