@@ -1,19 +1,42 @@
 var http = require('http');
 var fs = require('fs');
 var gulp = require('gulp');
+var gutil = require('gulp-util');
 var shell = require('gulp-shell');
 var flatten = require('gulp-flatten');
+var rename = require('gulp-rename');
 var del = require('del');
 var install = require('gulp-install');
 var zip = require('gulp-zip');
 var AWS = require('aws-sdk');
 var runSequence = require('run-sequence');
 var async = require('async');
-var config = require('./config.json');
 var s3 = new AWS.S3();
+
+var config;
+try {
+	config = require('./config.json');
+} catch (ex) {
+	config = {};
+}
 
 var filename = './build/ffmpeg-git-64bit-static.tar.xz';
 var fileURL = 'http://johnvansickle.com/ffmpeg/builds/ffmpeg-git-64bit-static.tar.xz';
+
+gulp.task('postinstall', function(cb) {
+	async.reject(
+		['config.json', 'test_event.json'],
+		fs.exists,
+		function(files) {
+			async.map(files, function(file, cb) {
+				return cb(null, gulp.src(file.replace(/\.json/, '_sample.json'))
+						.pipe(rename(file))
+						.pipe(gulp.dest('.'))
+				);
+			}, cb);
+		}
+	);
+});
 
 gulp.task('create-s3-buckets', function(cb) {
 	async.map(

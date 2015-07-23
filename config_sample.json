@@ -1,0 +1,8 @@
+{
+	"videoMaxWidth": 320,
+	"videoMaxDuration": 15,
+	"sourceBucket": "source-bucket",
+	"destinationBucket": "destination-bucket",
+	"linkPrefix": "http://my.site/",
+	"gzip": true
+}

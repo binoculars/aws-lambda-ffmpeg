@@ -67,10 +67,13 @@ This will be created by the gulp upload task by default.
 ```
 
 ### config.json
+See [sample_config.json](sample_config.json). config.json will be copied after npm install.
+
 ```JSON
 {
 	"videoMaxWidth": 320,
 	"videoMaxDuration": 15,
+	"sourceBucket": "source-bucket",
 	"destinationBucket": "destination-bucket",
 	"linkPrefix": "http://my.site/",
     "gzip": true
@@ -83,51 +86,10 @@ You'll need to create 2 buckets, a source bucket and a destination bucket. You c
 The source bucket should be configured to trigger Lambda events: 
 ![Source Bucket Event Configuration](doc/source-bucket-config.png?raw=true "Source Bucket Event Configuration")
 
+Use the gulp `create-s3-buckets` task.
+
 # Testing
-Sample file if you want to run a test locally. Modify the bucket name and object key.
-
-```JavaScript
-var lambda = require('./index').handler;
-
-lambda({
-	Records: [{
-		eventVersion: '2.0',
-		eventSource: 'aws:s3',
-		awsRegion: 'us-east-1',
-		eventTime: '2015-04-09T00:00:00.000Z',
-		eventName: 'ObjectCreated:Post',
-		userIdentity: {principalId: 'XXXXXXXXXXXXXX'},
-		requestParameters: {sourceIPAddress: '10.0.0.1'},
-		responseElements: {
-			'x-amz-request-id': 'AAAAAAAAAAAAAAAA',
-			'x-amz-id-2': 'example+uvBeYL11YHRGvzOb5qQz7cwxh7AzPlE+zuM2zRN6vTvd/1Qe0TJpKPCvZBoO4dB0gqM='
-		},
-		s3: {
-			s3SchemaVersion: '1.0',
-			configurationId: 'ProcessUploads',
-			bucket: {
-				name: 'source-bucket',
-				ownerIdentity: {principalId: 'XXXXXXXXXXXXXX'},
-				arn: 'arn:aws:s3:::source-bucket'
-			},
-			object: {
-				key: 'us-east-1%3A8ca8d677-aaaa-aaaa-aaaa-b75e887648ee/public/0524d7ce-aaaa-aaaa-aaaa-1f8cf05b3862.mp4',
-				size: 1000000,
-				eTag: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-			}
-		}
-	}]
-}, {
-	fail: function (error) {
-		console.log('Failed:', error);
-		process.exit(1);
-	},
-	succeed: function(result) {
-		console.log('Succeeded:', result);
-		process.exit();
-	}
-});
-```
+Edit test_event.json, by modifying the bucket name and object key, and run `npm test` if you want to run a test locally.
 
 # Gotchas
 - The object key from the event is URL encoded. Spaces in the filenames might be replaced with `+` so be aware of this and handle errors appropriately. If you try to download the file with the AWS SDK for JavaScript like in this example, without handling this, it will throw an error.

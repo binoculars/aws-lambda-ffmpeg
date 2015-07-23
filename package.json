@@ -5,7 +5,8 @@
   "description": "AWS Lambda function to resize video and generate a thumbnail",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "postinstall": "node_modules/.bin/gulp postinstall",
+    "test": "node test.js"
   },
   "keywords": [
     "aws",
@@ -15,7 +16,7 @@
   "author": "Barrett Harber",
   "license": "Unlicense",
   "devDependencies": {
-    "aws-sdk": "^2.1.39",
+    "aws-sdk": "2.1.35",
     "del": "^1.1.1",
     "gulp": "^3.8.11",
     "gulp-flatten": "0.0.4",

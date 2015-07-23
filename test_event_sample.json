@@ -1,0 +1,37 @@
+{
+	"Records": [
+		{
+			"eventVersion": "2.0",
+			"eventSource": "aws:s3",
+			"awsRegion": "us-east-1",
+			"eventTime": "2015-04-09T00:00:00.000Z",
+			"eventName": "ObjectCreated:Post",
+			"userIdentity": {
+				"principalId": "XXXXXXXXXXXXXX"
+			},
+			"requestParameters": {
+				"sourceIPAddress": "10.0.0.1"
+			},
+			"responseElements": {
+				"x-amz-request-id": "AAAAAAAAAAAAAAAA",
+				"x-amz-id-2": "example+uvBeYL11YHRGvzOb5qQz7cwxh7AzPlE+zuM2zRN6vTvd/1Qe0TJpKPCvZBoO4dB0gqM="
+			},
+			"s3": {
+				"s3SchemaVersion": "1.0",
+				"configurationId": "ProcessUploads",
+				"bucket": {
+					"name": "source-bucket",
+					"ownerIdentity": {
+						"principalId": "XXXXXXXXXXXXXX"
+					},
+					"arn": "arn:aws:s3:::source-bucket"
+				},
+				"object": {
+					"key": "us-east-1%3A8ca8d677-aaaa-aaaa-aaaa-b75e887648ee/public/0524d7ce-aaaa-aaaa-aaaa-1f8cf05b3862.mp4",
+					"size": 1000000,
+					"eTag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+				}
+			}
+		}
+	]
+}
