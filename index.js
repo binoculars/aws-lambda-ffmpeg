@@ -29,18 +29,14 @@ function s3upload(params, filename, cb) {
 		.on('httpUploadProgress', function(evt) {
 			console.log(filename, 'Progress:', evt.loaded, '/', evt.total);
 		})
-		.send(function(err, data) {
-			console.log(filename, 'complete. Deleting now.');
-			fs.unlinkSync(filename);
-			cb(err, data);
-		})
-	;
+		.send(cb);
 }
 
 function uploadFile(fileExt, id, bucket, keyPrefix, contentType, cb) {
 	console.log('Uploading', contentType);
 
 	var filename = '/tmp/out.' + fileExt;
+	var rmFiles = [filename];
 	var readStream = fs.createReadStream(filename);
 
 	var params = {
@@ -50,42 +46,44 @@ function uploadFile(fileExt, id, bucket, keyPrefix, contentType, cb) {
 		CacheControl: 'max-age=31536000' // 1 year (60 * 60 * 24 * 365)
 	};
 
-	var md5 = crypto.createHash('md5');
-	var md5pass = new stream.PassThrough;
-	var s3pass = new stream.PassThrough;
+	async.waterfall([
+		function(cb) {
+			if (!config.gzip)
+				return cb(null, readStream);
 
-	readStream.pipe(md5pass);
-	readStream.pipe(s3pass);
+			var gzipFilename = filename + '.gzip';
+			var md5 = crypto.createHash('md5');
+			var md5pass = new stream.PassThrough;
+			var s3pass = new stream.PassThrough;
 
-	md5pass
-		.on('data', function(d) {
-			md5.update(d);
-		})
-		.on('end', function() {
-			var digest = md5.digest();
+			rmFiles.push(gzipFilename);
+			params.ContentEncoding = 'gzip';
+			readStream.pipe(md5pass);
+			readStream.pipe(s3pass);
 
-			console.log(filename, 'md5', digest);
+			s3pass
+				.pipe(zlib.createGzip({level: zlib.Z_BEST_COMPRESSION}))
+				.pipe(fs.createWriteStream(gzipFilename));
 
-			if (config.gzip) {
-				params.Metadata = {
-					'md5': digest.toString('base64')
-				};
-
-				params.ContentEncoding = 'gzip';
-
-				params.Body = s3pass.pipe(
-					zlib.createGzip({
-						level: zlib.Z_BEST_COMPRESSION
-					})
-				);
-			}
-			else {
-				params.Body = s3pass;
-			}
-
+			md5pass
+				.on('data', function(d) {
+					md5.update(d);
+				})
+				.on('end', function() {
+					var digest = md5.digest();
+					params.Metadata = {'md5': digest.toString('hex')};
+					cb(null, fs.createReadStream(gzipFilename));
+				});
+		},
+		function(fstream, cb) {
+			params.Body = fstream;
 			s3upload(params, filename, cb);
-		})
-	;
+		},
+		function(data, cb) {
+			console.log(filename, 'complete. Deleting now.');
+			async.each(rmFiles, fs.unlink, cb);
+		}
+	], cb);
 }
 
 function ffprobeVerify(cb) {
@@ -138,7 +136,6 @@ function ffprobeVerify(cb) {
 				return cb(null, 'ffprobe finished');
 			}
 		}
-
 	});
 
 	return ffprobe;
