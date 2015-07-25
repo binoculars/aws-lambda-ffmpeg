@@ -20,7 +20,6 @@ function downloadStream(bucket, file, cb) {
 		Bucket: bucket,
 		Key: file
 	}).on('error', function(res) {
-		req.end();
 		cb('S3 download error: ' + JSON.stringify(res));
 	}).createReadStream();
 }
@@ -233,6 +232,6 @@ exports.handler = function(event, context) {
 		}
 	], function(err, results) {
 		if (err) context.fail(err);
-		else context.succeed(util.inspect(results, {depth: 5}));
+		else context.succeed(results);
 	});
 };
