@@ -220,8 +220,7 @@ exports.handler = function(event, context) {
 	var srcKey = decodeURIComponent(s3Event.object.key);
 	var keyPrefix = srcKey.replace(/\.[^/.]+$/, '');
 	// Key structure on source bucket is 3 folders deep with a UUID filename
-	var splitPrefix = keyPrefix.split('/');
-	var id = new Buffer(uuid.parse(splitPrefix[2]));
+	var id = new Buffer(uuid.parse(keyPrefix.split('/').pop()));
 
 	async.series([
 		function (cb) { processVideo(s3Event, srcKey, id, cb); },
