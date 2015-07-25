@@ -49,7 +49,7 @@ function uploadFile(fileExt, id, bucket, keyPrefix, contentType, cb) {
 	async.waterfall([
 		function(cb) {
 			if (!config.gzip)
-				return cb(null, readStream);
+				return cb(null, readStream, null);
 
 			var gzipFilename = filename + '.gzip';
 			var md5 = crypto.createHash('md5');
@@ -70,13 +70,15 @@ function uploadFile(fileExt, id, bucket, keyPrefix, contentType, cb) {
 					md5.update(d);
 				})
 				.on('end', function() {
-					var digest = md5.digest();
-					params.Metadata = {'md5': digest.toString('hex')};
-					cb(null, fs.createReadStream(gzipFilename));
+					cb(null, fs.createReadStream(gzipFilename), md5.digest());
 				});
 		},
-		function(fstream, cb) {
+		function(fstream, md5digest, cb) {
 			params.Body = fstream;
+
+			if (md5digest)
+				params.Metadata = {'md5': md5digest.toString('hex')};
+
 			s3upload(params, filename, cb);
 		},
 		function(data, cb) {
