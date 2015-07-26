@@ -61,17 +61,26 @@ function uploadFile(fileExt, id, bucket, keyPrefix, contentType, cb) {
 			readStream.pipe(md5pass);
 			readStream.pipe(s3pass);
 
-			s3pass
-				.pipe(zlib.createGzip({level: zlib.Z_BEST_COMPRESSION}))
-				.pipe(fs.createWriteStream(gzipFilename));
+			async.parallel([
+				function(cb) {
+					var gzipWriteStream = fs.createWriteStream(gzipFilename);
 
-			md5pass
-				.on('data', function(d) {
-					md5.update(d);
-				})
-				.on('end', function() {
-					cb(null, fs.createReadStream(gzipFilename), md5.digest());
-				});
+					gzipWriteStream.on('finish', cb);
+
+					s3pass
+						.pipe(zlib.createGzip({level: zlib.Z_BEST_COMPRESSION}))
+						.pipe(gzipWriteStream);
+				},
+				function(cb) {
+					md5pass
+						.on('data', function(d) {
+							md5.update(d);
+						})
+						.on('finish', cb);
+				}
+			], function() {
+				cb(null, fs.createReadStream(gzipFilename), md5.digest());
+			});
 		},
 		function(fstream, md5digest, cb) {
 			params.Body = fstream;
