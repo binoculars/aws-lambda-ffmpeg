@@ -12,6 +12,7 @@ var AWS = require('aws-sdk');
 var runSequence = require('run-sequence');
 var async = require('async');
 var s3 = new AWS.S3();
+var cloudformation = new AWS.CloudFormation();
 
 var config;
 try {
@@ -143,21 +144,28 @@ gulp.task('upload', function(cb) {
 					} else {
 						async.waterfall([
 							function(cb) {
-								iam.createRole({
-									AssumeRolePolicyDocument: JSON.stringify({
-										"Version": "2012-10-17",
-										"Statement": [
-											{
-												"Effect": "Allow",
-												"Principal": {
-													"Service": "lambda.amazonaws.com"
-												},
-												"Action": "sts:AssumeRole"
-											}
-										]
-									}),
+								iam.getRole({
 									RoleName: packageInfo.name + '_execRole'
-								}, cb);
+								}, function(err, data) {
+									if (err) {
+										iam.createRole({
+											AssumeRolePolicyDocument: JSON.stringify({
+												"Version": "2012-10-17",
+												"Statement": [
+													{
+														"Effect": "Allow",
+														"Principal": {
+															"Service": "lambda.amazonaws.com"
+														},
+														"Action": "sts:AssumeRole"
+													}
+												]
+											}),
+											RoleName: packageInfo.name + '_execRole'
+										}, cb);
+									}
+									else cb(null, data);
+								});
 							},
 							function(data, cb) {
 								params.Role = data.Role.Arn;
