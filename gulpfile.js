@@ -131,7 +131,7 @@ gulp.task('upload', function(cb) {
 			FunctionName: lambdaConfig.FunctionName || packageInfo.name,
 			Handler: lambdaConfig.Handler || 'index.handler',
 			Description: packageInfo.description,
-			MemorySize: 512,
+			MemorySize: 1536,
 			Timeout: 30
 		};
 

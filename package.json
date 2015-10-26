@@ -16,7 +16,7 @@
   "author": "Barrett Harber",
   "license": "Unlicense",
   "devDependencies": {
-    "aws-sdk": "2.1.35",
+    "aws-sdk": "2.2.3",
     "del": "^1.1.1",
     "gulp": "^3.8.11",
     "gulp-flatten": "0.0.4",
