@@ -12,7 +12,6 @@ var AWS = require('aws-sdk');
 var runSequence = require('run-sequence');
 var async = require('async');
 var s3 = new AWS.S3();
-var cloudformation = new AWS.CloudFormation();
 
 var config;
 try {
@@ -54,6 +53,10 @@ gulp.task('create-s3-buckets', function(cb) {
 });
 
 gulp.task('download-ffmpeg', function(cb) {
+	if(!fs.existsSync('./build')) {
+		fs.mkdirSync('./build');
+	}
+
 	var file = fs.createWriteStream(filename);
 	http.get(fileURL, function(response) {
 		response.pipe(file);
