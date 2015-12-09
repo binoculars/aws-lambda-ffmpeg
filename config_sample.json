@@ -1,8 +1,18 @@
 {
 	"videoMaxWidth": 320,
-	"videoMaxDuration": 15,
+	"videoMaxDuration": 60,
 	"sourceBucket": "source-bucket",
 	"destinationBucket": "destination-bucket",
 	"linkPrefix": "http://my.site/",
-	"gzip": true
+	"gzip": false,
+	"format": {
+		"image": {
+			"extension": "png",
+			"mimeType": "image/png"
+		},
+		"video": {
+			"extension": "mp4",
+			"mimeType": "video/mp4"
+		}
+	}
 }
