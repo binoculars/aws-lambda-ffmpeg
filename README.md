@@ -76,7 +76,17 @@ See [config_sample.json](config_sample.json). config.json will be copied after n
 	"sourceBucket": "source-bucket",
 	"destinationBucket": "destination-bucket",
 	"linkPrefix": "http://my.site/",
-    "gzip": true
+    "gzip": false,
+    "format": {
+        "image": {
+            "extension": "png",
+            "mimeType": "image/png"
+        },
+        "video": {
+            "extension": "mp4",
+            "mimeType": "video/mp4"
+        }
+    }
 }
 ```
 
@@ -92,6 +102,7 @@ Use the gulp `create-s3-buckets` task.
 Edit test_event.json, by modifying the bucket name and object key, and run `npm test` if you want to run a test locally.
 
 # Gotchas
+- Gzipping videos will cause Safari errors in playback. Don't enable gzip unless you don't care about supporting Safari.
 - The object key from the event is URL encoded. Spaces in the filenames might be replaced with `+` so be aware of this and handle errors appropriately. If you try to download the file with the AWS SDK for JavaScript like in this example, without handling this, it will throw an error.
 - Not handling errors with `context.fail(error)` will cause the function to run until the timeout is reached.
 - Pick the largest memory allocation. This is mostly CPU bound, but Lambda bundles memory and CPU allocation together. Testing with different videos and sizes should give you a good idea if it meets the requirements. Total execution time is limited!
