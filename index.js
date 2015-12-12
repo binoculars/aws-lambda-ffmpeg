@@ -51,44 +51,42 @@ function uploadFile(fileExt, bucket, keyPrefix, contentType, cb) {
 	async.waterfall([
 		function(cb) {
 			if (!config.gzip)
-				return cb(null, readStream, null);
+				return cb(null, readStream, filename);
 
 			var gzipFilename = filename + '.gzip';
-			var md5 = crypto.createHash('md5');
-			var md5pass = new stream.PassThrough;
-			var s3pass = new stream.PassThrough;
 
 			rmFiles.push(gzipFilename);
 			params.ContentEncoding = 'gzip';
-			readStream.pipe(md5pass);
-			readStream.pipe(s3pass);
 
-			async.parallel([
-				function(cb) {
-					var gzipWriteStream = fs.createWriteStream(gzipFilename);
+			var gzipWriteStream = fs.createWriteStream(gzipFilename);
 
-					gzipWriteStream.on('finish', cb);
+			gzipWriteStream.on('finish', function() {
+				cb(null, fs.createReadStream(filename), gzipFilename);
+			});
 
-					s3pass
-						.pipe(zlib.createGzip({level: zlib.Z_BEST_COMPRESSION}))
-						.pipe(gzipWriteStream);
-				},
-				function(cb) {
-					md5pass
-						.on('data', function(d) {
-							md5.update(d);
-						})
-						.on('finish', cb);
-				}
-			], function() {
-				cb(null, fs.createReadStream(gzipFilename), md5.digest());
+			readStream
+				.pipe(zlib.createGzip({level: zlib.Z_BEST_COMPRESSION}))
+				.pipe(gzipWriteStream);
+		},
+		function(fstream, uploadFilename, cb) {
+			console.log('Begin hashing', uploadFilename);
+
+			var hash = crypto.createHash('sha256');
+
+			fstream.on('data', function(d) {
+				hash.update(d);
+			});
+
+			fstream.on('end', function() {
+				cb(null, fs.createReadStream(uploadFilename), hash.digest('hex'));
 			});
 		},
-		function(fstream, md5digest, cb) {
+		function(fstream, hashdigest, cb) {
+			console.log(filename, 'hashDigest:', hashdigest);
 			params.Body = fstream;
 
-			if (md5digest)
-				params.Metadata = {'md5': md5digest.toString('hex')};
+			if (hashdigest)
+				params.Metadata = {'sha256': hashdigest};
 
 			s3upload(params, filename, cb);
 		},
