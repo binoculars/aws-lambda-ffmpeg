@@ -147,7 +147,7 @@ gulp.task('deployStack', function(cb) {
 					ParameterValue: key
 				}
 			],
-			TemplateBody: fs.readFileSync('./cloudFormation.json', {encoding: 'utf8'})
+			TemplateBody: fs.readFileSync('./cloudformation.json', {encoding: 'utf8'})
 		}, cb);
 	});
 });
@@ -160,6 +160,7 @@ gulp.task('default', function(cb) {
 		['copy-ffmpeg', 'js', 'npm'],
 		['zip'],
 		['upload'],
+		['deployStack'],
 		cb
 	);
 });
