@@ -1,0 +1,193 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "Resizes a video and produces a thumbnail image",
+	"Parameters": {
+		"SourceBucketName": {
+			"Type": "String",
+			"Description": "The S3 source bucket"
+		},
+		"DestinationBucketName": {
+			"Type": "String",
+			"Description": "The S3 source bucket"
+		},
+		"LambdaS3Bucket": {
+			"Type": "String",
+			"Description": "The S3 bucket in which the lambda function code is stored"
+		},
+		"LambdaS3Key": {
+			"Type": "String",
+			"AllowedPattern": ".*\\.zip",
+			"Description": "The S3 key for the lambda function code"
+		}
+	},
+	"Resources": {
+		"ExecutionRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": [
+									"lambda.amazonaws.com"
+								]
+							},
+							"Action": [
+								"sts:AssumeRole"
+							]
+						}
+					]
+				},
+				"Path": "/",
+				"Policies": [
+					{
+						"PolicyName": "ExecutionRolePolicy",
+						"PolicyDocument": {
+							"Version": "2012-10-17",
+							"Statement": [
+								{
+									"Effect": "Allow",
+									"Action": [
+										"logs:*"
+									],
+									"Resource": [
+										"arn:aws:logs:*:*:*"
+									]
+								},
+								{
+									"Effect": "Allow",
+									"Action": [
+										"logs:*"
+									],
+									"Resource": "arn:aws:logs:*:*:*"
+								},
+								{
+									"Effect": "Allow",
+									"Action": "s3:GetObject",
+									"Resource": {
+										"Fn::Join": [
+											"",
+											[
+												"arn:aws:s3:::",
+												{
+													"Ref": "SourceBucketName"
+												},
+												"/*"
+											]
+										]
+									}
+								},
+								{
+									"Effect": "Allow",
+									"Action": "s3:PutObject",
+									"Resource": {
+										"Fn::Join": [
+											"",
+											[
+												"arn:aws:s3:::",
+												{
+													"Ref": "DestinationBucketName"
+												},
+												"/*"
+											]
+										]
+									}
+								}
+							]
+						}
+					}
+				]
+			}
+		},
+		"Lambda": {
+			"Type": "AWS::Lambda::Function",
+			"DependsOn": [
+				"ExecutionRole"
+			],
+			"Properties": {
+				"Code": {
+					"S3Bucket": {
+						"Ref": "LambdaS3Bucket"
+					},
+					"S3Key": {
+						"Ref": "LambdaS3Key"
+					}
+				},
+				"Role": {
+					"Fn::GetAtt": [
+						"ExecutionRole",
+						"Arn"
+					]
+				},
+				"Timeout": 30,
+				"Handler": "index.handler",
+				"Runtime": "nodejs",
+				"MemorySize": 1536
+			}
+		},
+		"LambdaPermission": {
+			"Type": "AWS::Lambda::Permission",
+			"DependsOn": [
+				"Lambda"
+			],
+			"Properties": {
+				"Action": "lambda:invokeFunction",
+				"FunctionName": {
+					"Fn::GetAtt": [
+						"Lambda",
+						"Arn"
+					]
+				},
+				"Principal": "s3.amazonaws.com",
+				"SourceAccount": {
+					"Ref": "AWS::AccountId"
+				},
+				"SourceArn": {
+					"Fn::Join": [
+						"",
+						[
+							"arn:aws:s3:::",
+							{
+								"Ref": "SourceBucketName"
+							}
+						]
+					]
+				}
+			}
+		},
+		"SourceBucket": {
+			"Type": "AWS::S3::Bucket",
+			"DependsOn": [
+				"Lambda"
+			],
+			"Properties": {
+				"BucketName": {
+					"Ref": "SourceBucketName"
+				},
+				"NotificationConfiguration": {
+					"LambdaConfigurations": [
+						{
+							"Event": "s3:ObjectCreated:*",
+							"Function": {
+								"Fn::GetAtt": [
+									"Lambda",
+									"Arn"
+								]
+							}
+						}
+					]
+				}
+			}
+		},
+		"DestinationBucket": {
+			"Type": "AWS::S3::Bucket",
+			"Properties": {
+				"BucketName": {
+					"Ref": "DestinationBucketName"
+				}
+			}
+		}
+	}
+}

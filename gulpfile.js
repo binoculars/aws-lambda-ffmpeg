@@ -38,20 +38,6 @@ gulp.task('postinstall', function(cb) {
 	);
 });
 
-gulp.task('create-s3-buckets', function(cb) {
-	async.map(
-		[config.sourceBucket, config.destinationBucket],
-		function(bucketName, cb) {
-			s3.createBucket({Bucket: bucketName}, cb);
-		},
-		function(err, results) {
-			if (err) console.log(err);
-			else console.log(results);
-			cb();
-		}
-	);
-});
-
 gulp.task('download-ffmpeg', function(cb) {
 	if(!fs.existsSync('./build')) {
 		fs.mkdirSync('./build');
@@ -114,139 +100,56 @@ gulp.task('zip', function() {
 		.pipe(gulp.dest('./'));
 });
 
-// Per the gulp guidelines, we do not need a plugin for something that can be
-// done easily with an existing node module. #CodeOverConfig
-//
-// Note: This presumes that AWS.config already has credentials. This will be
-// the case if you have installed and configured the AWS CLI.
-//
-// See http://aws.amazon.com/sdk-for-node-js/
-var lambda = new AWS.Lambda();
-var iam = new AWS.IAM();
+var cloudFormation = new AWS.CloudFormation();
 var packageInfo = require('./package.json');
+var bucket = config.functionBucket;
+var functionName = packageInfo.name;
+var key = functionName + '.zip';
 
+// Upload the function code to S3
 gulp.task('upload', function(cb) {
-	lambda.getFunction({
-		FunctionName: packageInfo.name
-	}, function(err, data) {
-		var lambdaConfig = data ? data.Configuration || {} : {};
-		var params = {
-			FunctionName: lambdaConfig.FunctionName || packageInfo.name,
-			Handler: lambdaConfig.Handler || 'index.handler',
-			Description: packageInfo.description,
-			MemorySize: 1536,
-			Timeout: 30
-		};
-
-		if (err && err.statusCode === 404) {
-			async.waterfall([
-				function(cb) {
-					if (lambdaConfig.Role) {
-						params.Role = lambdaConfig.Role;
-						return cb();
-					} else {
-						async.waterfall([
-							function(cb) {
-								iam.getRole({
-									RoleName: packageInfo.name + '_execRole'
-								}, function(err, data) {
-									if (err) {
-										iam.createRole({
-											AssumeRolePolicyDocument: JSON.stringify({
-												"Version": "2012-10-17",
-												"Statement": [
-													{
-														"Effect": "Allow",
-														"Principal": {
-															"Service": "lambda.amazonaws.com"
-														},
-														"Action": "sts:AssumeRole"
-													}
-												]
-											}),
-											RoleName: packageInfo.name + '_execRole'
-										}, cb);
-									}
-									else cb(null, data);
-								});
-							},
-							function(data, cb) {
-								params.Role = data.Role.Arn;
-								iam.putRolePolicy({
-									PolicyDocument: JSON.stringify({
-										"Version": "2012-10-17",
-										"Statement": [
-											{
-												"Effect": "Allow",
-												"Action": ["logs:*"],
-												"Resource": "arn:aws:logs:*:*:*"
-											},
-											{
-												"Effect": "Allow",
-												"Action": ["s3:GetObject"],
-												"Resource": ["arn:aws:s3:::" + config.sourceBucket + "/*"]
-											},
-											{
-												"Effect": "Allow",
-												"Action": ["s3:PutObject"],
-												"Resource": ["arn:aws:s3:::" + config.destinationBucket + "/*"]
-											}
-										]
-									}, null, '\t'),
-									PolicyName: data.Role.RoleName + '_policy',
-									RoleName: data.Role.RoleName
-								}, cb);
-							}
-						], cb);
-					}
-				},
-				function(data, cb) {
-					fs.readFile('./dist.zip', cb);
-				},
-				function(file, cb) {
-					params.Code = {ZipFile: file};
-					params.Runtime = 'nodejs';
-					lambda.createFunction(params, cb);
-				}
-			], cb);
-		} else {
-			async.waterfall([
-				function(cb) {
-					fs.readFile('./dist.zip', cb);
-				},
-				function(file, cb) {
-					lambda.updateFunctionCode({
-						FunctionName: params.FunctionName,
-						ZipFile: file
-					}, cb);
-				}
-			], cb);
-		}
-	});
+	s3.upload({
+		Bucket: bucket,
+		Key: key,
+		Body: fs.createReadStream('./dist.zip')
+	}, cb);
 });
 
-gulp.task('configure-source-bucket-events', function(cb) {
-	async.waterfall([
-		function(cb) {
-			lambda.getFunctionConfiguration({
-				FunctionName: packageInfo.name
-			}, cb);
-		},
-		function(data, cb) {
-			s3.putBucketNotificationConfiguration({
-				Bucket: config.sourceBucket,
-				NotificationConfiguration: {
-					LambdaFunctionConfigurations: [
-						{
-							Events: ['s3:ObjectCreated:*'],
-							LambdaFunctionArn: data.FunctionArn,
-							Id: 'Process with ' + packageInfo.name
-						}
-					]
+var stackName = packageInfo.name;
+
+// Deploy the CloudFormation Stack
+gulp.task('deployStack', function(cb) {
+	cloudFormation.describeStacks({
+		StackName: stackName
+	}, function(err) {
+		var operation = err ? 'createStack' : 'updateStack';
+
+		cloudFormation[operation]({
+			StackName: stackName,
+			Capabilities: [
+				'CAPABILITY_IAM'
+			],
+			Parameters: [
+				{
+					ParameterKey: 'SourceBucketName',
+					ParameterValue: config.sourceBucket
+				},
+				{
+					ParameterKey: 'DestinationBucketName',
+					ParameterValue: config.destinationBucket
+				},
+				{
+					ParameterKey: 'LambdaS3Bucket',
+					ParameterValue: bucket
+				},
+				{
+					ParameterKey: 'LambdaS3Key',
+					ParameterValue: key
 				}
-			}, cb);
-		}
-	], cb);
+			],
+			TemplateBody: fs.readFileSync('./cloudFormation.json', {encoding: 'utf8'})
+		}, cb);
+	});
 });
 
 gulp.task('default', function(cb) {

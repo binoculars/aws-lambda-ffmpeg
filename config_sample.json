@@ -1,6 +1,7 @@
 {
 	"videoMaxWidth": 320,
 	"videoMaxDuration": 60,
+	"functionBucket": "function-bucket",
 	"sourceBucket": "source-bucket",
 	"destinationBucket": "destination-bucket",
 	"linkPrefix": "http://my.site/",
