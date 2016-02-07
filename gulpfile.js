@@ -12,6 +12,7 @@ var AWS = require('aws-sdk');
 var runSequence = require('run-sequence');
 var async = require('async');
 var s3 = new AWS.S3();
+var lambda = new AWS.Lambda();
 
 var config;
 try {
@@ -150,6 +151,39 @@ gulp.task('deployStack', function(cb) {
 			TemplateBody: fs.readFileSync('./cloudformation.json', {encoding: 'utf8'})
 		}, cb);
 	});
+});
+
+// Once the stack is deployed, this will update the function if the code is changed without recreating the stack
+gulp.task('updateCode', function(cb) {
+	async.waterfall([
+		function(cb) {
+			cloudFormation.describeStackResource({
+				StackName: stackName,
+				LogicalResourceId: 'Lambda'
+			}, cb);
+		},
+		function(data, cb) {
+			lambda.updateFunctionCode({
+				FunctionName: data.StackResourceDetail.PhysicalResourceId,
+				S3Bucket: bucket,
+				S3Key: key
+			}, cb);
+		}
+	], cb);
+});
+
+// Builds the function and updates it for an already created stack
+gulp.task('update', function(cb) {
+	return runSequence(
+		['clean'],
+		['download-ffmpeg'],
+		['untar-ffmpeg'],
+		['copy-ffmpeg', 'js', 'npm'],
+		['zip'],
+		['upload'],
+		['updateCode'],
+		cb
+	);
 });
 
 gulp.task('default', function(cb) {

@@ -47,6 +47,9 @@ At minimum, you need to modify:
 ## Testing
 Edit test_event.json, by modifying the bucket name and object key, and run `npm test` if you want to run a test locally.
 
+## Updates/Modification to the lambda function or configuration
+Run `gulp update` after modifying anything in the Lambda function if you've already created the stack. This will rebuild `dist.zip`, upload it to S3, and update the lambda function created during the CloudFormation stack creation.
+
 ## Gotchas
 - Gzipping videos will cause Safari errors in playback. Don't enable gzip unless you don't care about supporting Safari.
 - The object key from the event is URL encoded. Spaces in the filenames might be replaced with `+` so be aware of this and handle errors appropriately. If you try to download the file with the AWS SDK for JavaScript like in this example, without handling this, it will throw an error.
