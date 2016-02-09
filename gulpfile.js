@@ -73,12 +73,12 @@ gulp.task('copy-ffmpeg', function() {
  */
 
 // First we need to clean out the dist folder and remove the compiled zip file.
-gulp.task('clean', function(cb) {
-	del([
+gulp.task('clean', function() {
+	return del([
 		'./build/*',
 		'./dist/*',
 		'./dist.zip'
-	], cb);
+	]);
 });
 
 // The js task could be replaced with gulp-coffee as desired.
@@ -175,13 +175,13 @@ gulp.task('updateCode', function(cb) {
 // Builds the function and updates it for an already created stack
 gulp.task('update', function(cb) {
 	return runSequence(
-		['clean'],
-		['download-ffmpeg'],
-		['untar-ffmpeg'],
+		'clean',
+		'download-ffmpeg',
+		'untar-ffmpeg',
 		['copy-ffmpeg', 'js', 'npm'],
-		['zip'],
-		['upload'],
-		['updateCode'],
+		'zip',
+		'upload',
+		'updateCode',
 		cb
 	);
 });

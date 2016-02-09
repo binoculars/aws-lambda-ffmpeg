@@ -1,5 +1,8 @@
 > An [AWS Lambda](http://aws.amazon.com/lambda/) function that resizes videos and outputs thumbnails using [FFmpeg](https://www.ffmpeg.org/). This function is meant for short-duration videos. If you need to transcode long videos, check out [AWS Elastic Transcoder](http://aws.amazon.com/elastictranscoder/).
 
+[![Dependency Status](https://david-dm.org/binoculars/aws-lambda-ffmpeg.svg)](https://david-dm.org/binoculars/aws-lambda-ffmpeg)
+[![devDependency Status](https://david-dm.org/binoculars/aws-lambda-ffmpeg/dev-status.svg)](https://david-dm.org/binoculars/aws-lambda-ffmpeg#info=devDependencies)
+
 ## Setup
 1. Install node.js, preferably through [nvm](/creationix/nvm). Lambda uses a [specific version of node](http://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html), so it would be best use the same version--especially when installing dependencies via npm.
 1. Clone this repo
