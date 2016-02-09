@@ -172,8 +172,8 @@ gulp.task('updateCode', function(cb) {
 	], cb);
 });
 
-// Builds the function and updates it for an already created stack
-gulp.task('update', function(cb) {
+// Builds the function and uploads
+gulp.task('build-upload', function(cb) {
 	return runSequence(
 		'clean',
 		'download-ffmpeg',
@@ -181,20 +181,24 @@ gulp.task('update', function(cb) {
 		['copy-ffmpeg', 'js', 'npm'],
 		'zip',
 		'upload',
+		cb
+	);
+});
+
+// For an already created stack
+gulp.task('update', function(cb) {
+	return runSequence(
+		'build-upload',
 		'updateCode',
 		cb
 	);
 });
 
+// For a new stack (or you change cloudformation.json)
 gulp.task('default', function(cb) {
 	return runSequence(
-		['clean'],
-		['download-ffmpeg'],
-		['untar-ffmpeg'],
-		['copy-ffmpeg', 'js', 'npm'],
-		['zip'],
-		['upload'],
-		['deployStack'],
+		'build-upload',
+		'deployStack',
 		cb
 	);
 });
