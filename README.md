@@ -60,6 +60,6 @@ Run `gulp update` after modifying anything in the Lambda function if you've alre
 - Pick the largest memory allocation. This is mostly CPU bound, but Lambda bundles memory and CPU allocation together. Memory size is 1536 by default. Testing with different videos and sizes should give you a good idea if it meets the requirements. Total execution time is limited!
 
 ## Contributing
-Submit issues if you find bugs or something is unclear. Pull requests are event better, especially if you can make something more generalized.
+Submit issues if you find bugs or something is unclear. Pull requests are even better, especially if you can make something more generalized.
 
 **If you use it, star it!**
