@@ -15,6 +15,14 @@ var scaleFilter = "scale='min(" + config.videoMaxWidth.toString() + "\\,iw):-2'"
 var s3 = new AWS.S3();
 var tempDir = process.env['TEMP'] || '/tmp';
 
+/**
+ * Creates a readable stream from an S3 Object reference
+ * 
+ * @param {string} bucket - The S3 Bucket
+ * @param {string} file - The S3 Key
+ * @param {requestCallback} cb
+ * @returns {Object}
+ */
 function downloadStream(bucket, file, cb) {
 	console.log('Starting download');
 
@@ -26,6 +34,14 @@ function downloadStream(bucket, file, cb) {
 	}).createReadStream();
 }
 
+
+/**
+ * Uploads a file to an S3 Bucket
+ *
+ * @param {Object} params - The S3 upload parameters
+ * @param {string} filename - The local filename
+ * @param {requestCallback} cb
+ */
 function s3upload(params, filename, cb) {
 	s3.upload(params)
 		.on('httpUploadProgress', function(evt) {
@@ -34,6 +50,16 @@ function s3upload(params, filename, cb) {
 		.send(cb);
 }
 
+
+/**
+ * Prepares and uploads a file
+ *
+ * @param {string} fileExt - The extension of the filename
+ * @param {string} bucket - The S3 Bucket
+ * @param {string} keyPrefix - The prefix for the S3 key
+ * @param {string} contentType - The content type (MIME type) of the file
+ * @param {requestCallback} cb
+ */
 function uploadFile(fileExt, bucket, keyPrefix, contentType, cb) {
 	console.log('Uploading', contentType);
 
@@ -97,6 +123,11 @@ function uploadFile(fileExt, bucket, keyPrefix, contentType, cb) {
 	], cb);
 }
 
+/**
+ * Verifies that the file contains a valid video stream and is less than the maximum duration
+ *
+ * @param {requestCallback} cb
+ */
 function ffprobeVerify(cb) {
 	console.log('Starting FFprobe');
 
@@ -133,6 +164,12 @@ function ffprobeVerify(cb) {
 	);
 }
 
+/**
+ * Runs the FFmpeg command on the file
+ * 
+ * @param {string} description
+ * @param {requestCallback} cb
+ */
 function ffmpegProcess(description, cb) {
 	console.log('Starting FFmpeg');
 
@@ -162,6 +199,13 @@ function ffmpegProcess(description, cb) {
 	);
 }
 
+/**
+ * Downloads the file from S3, sends it to FFprobe, processes it through FFmpeg, and deletes the downloaded file.
+ * 
+ * @param {Object} s3Event
+ * @param {string} srcKey
+ * @param {requestCallback} cb
+ */
 function processVideo(s3Event, srcKey, cb) {
 	var dlFile = path.join(tempDir, 'download');
 
@@ -186,6 +230,12 @@ function processVideo(s3Event, srcKey, cb) {
 	], cb);
 }
 
+/**
+ * The main handler for the lambda function
+ * 
+ * @param {Object} event - The S3 Event
+ * @param {Object} context - The Lambda context
+ */
 exports.handler = function(event, context) {
 	console.log("Reading options from event:\n", util.inspect(event, {depth: 5}));
 
