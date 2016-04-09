@@ -1,25 +1,14 @@
 var http = require('http');
 var fs = require('fs');
+var path = require('path');
 var gulp = require('gulp');
-var gutil = require('gulp-util');
 var shell = require('gulp-shell');
 var flatten = require('gulp-flatten');
 var rename = require('gulp-rename');
 var del = require('del');
 var install = require('gulp-install');
 var zip = require('gulp-zip');
-var AWS = require('aws-sdk');
-var runSequence = require('run-sequence');
 var async = require('async');
-var s3 = new AWS.S3();
-var lambda = new AWS.Lambda();
-
-var config;
-try {
-	config = require('./config.json');
-} catch (ex) {
-	config = {};
-}
 
 var filename = './build/ffmpeg-git-64bit-static.tar.xz';
 var fileURL = 'http://johnvansickle.com/ffmpeg/builds/ffmpeg-git-64bit-static.tar.xz';
@@ -81,12 +70,6 @@ gulp.task('clean', function() {
 	]);
 });
 
-// The js task could be replaced with gulp-coffee as desired.
-gulp.task('js', function() {
-	return gulp.src(['index.js', 'config.json'])
-		.pipe(gulp.dest('./dist'))
-});
-
 // Here we want to install npm packages to dist, ignoring devDependencies.
 gulp.task('npm', function() {
 	return gulp.src('./package.json')
@@ -101,104 +84,27 @@ gulp.task('zip', function() {
 		.pipe(gulp.dest('./'));
 });
 
-var cloudFormation = new AWS.CloudFormation();
-var packageInfo = require('./package.json');
-var bucket = config.functionBucket;
-var functionName = packageInfo.name;
-var key = functionName + '.zip';
+[
+	'aws',
+	'gcp'
+].forEach(function(platform) {
+	gulp.task(platform + ':source', function() {
+		var files = [
+			'common.js',
+			platform + '/index.js',
+			platform + '/lib.js',
+			platform + '/config.json',
+			platform + '/keyfile.json'
+		];
+		var baseDir = 'platform';
+		var options = {
+			base: baseDir,
+			cwd: baseDir
+		};
 
-// Upload the function code to S3
-gulp.task('upload', function(cb) {
-	s3.upload({
-		Bucket: bucket,
-		Key: key,
-		Body: fs.createReadStream('./dist.zip')
-	}, cb);
-});
-
-var stackName = packageInfo.name;
-
-// Deploy the CloudFormation Stack
-gulp.task('deployStack', function(cb) {
-	cloudFormation.describeStacks({
-		StackName: stackName
-	}, function(err) {
-		var operation = err ? 'createStack' : 'updateStack';
-
-		cloudFormation[operation]({
-			StackName: stackName,
-			Capabilities: [
-				'CAPABILITY_IAM'
-			],
-			Parameters: [
-				{
-					ParameterKey: 'SourceBucketName',
-					ParameterValue: config.sourceBucket
-				},
-				{
-					ParameterKey: 'DestinationBucketName',
-					ParameterValue: config.destinationBucket
-				},
-				{
-					ParameterKey: 'LambdaS3Bucket',
-					ParameterValue: bucket
-				},
-				{
-					ParameterKey: 'LambdaS3Key',
-					ParameterValue: key
-				}
-			],
-			TemplateBody: fs.readFileSync('./cloudformation.json', {encoding: 'utf8'})
-		}, cb);
+		return gulp.src(files, options)
+			.pipe(gulp.dest('dist'));
 	});
-});
 
-// Once the stack is deployed, this will update the function if the code is changed without recreating the stack
-gulp.task('updateCode', function(cb) {
-	async.waterfall([
-		function(cb) {
-			cloudFormation.describeStackResource({
-				StackName: stackName,
-				LogicalResourceId: 'Lambda'
-			}, cb);
-		},
-		function(data, cb) {
-			lambda.updateFunctionCode({
-				FunctionName: data.StackResourceDetail.PhysicalResourceId,
-				S3Bucket: bucket,
-				S3Key: key
-			}, cb);
-		}
-	], cb);
-});
-
-// Builds the function and uploads
-gulp.task('build-upload', function(cb) {
-	return runSequence(
-		'clean',
-		'download-ffmpeg',
-		'untar-ffmpeg',
-		['copy-ffmpeg', 'js', 'npm'],
-		'zip',
-		'upload',
-		cb
-	);
-});
-
-// For an already created stack
-gulp.task('update', function(cb) {
-	return runSequence(
-		'build-upload',
-		'updateCode',
-		cb
-	);
-});
-
-// For a new stack (or you change cloudformation.json)
-gulp.task('default', function(cb) {
-	return runSequence(
-		'build-upload',
-		'deployStack',
-		cb
-	);
+	require(path.join(__dirname, 'platform', platform, 'gulpfile.js'))(gulp, platform);
 });
