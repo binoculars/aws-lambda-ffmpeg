@@ -17,6 +17,7 @@
   "license": "Unlicense",
   "devDependencies": {
     "aws-sdk": "2.2.41",
+    "azure-storage": "^0.10.0",
     "del": "^2.2.0",
     "gcloud": "^0.29.0",
     "gulp": "^3.8.11",
