@@ -10,9 +10,9 @@ var common = require('../common.js');
  * @param {Object} data - The event data
  */
 exports.ffmpeg = function(context, data) {
-	console.log("Reading options from data:\n", util.inspect(data, {depth: 5}));
+	context.log("Reading options from data:\n", util.inspect(data, {depth: 5}));
 
-	common.main(lib, config, {
+	common.main(lib, config, context, {
 		event: data,
 		context: context,
 		callback: context.done

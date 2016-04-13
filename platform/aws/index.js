@@ -13,7 +13,7 @@ var common = require('../common.js');
 exports.handler = function(event, context, callback) {
 	console.log("Reading options from event:\n", util.inspect(event, {depth: 5}));
 
-	common.main(lib, config, {
+	common.main(lib, config, console, {
 		event: event,
 		context: context,
 		callback: callback

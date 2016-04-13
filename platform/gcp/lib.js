@@ -15,8 +15,6 @@ var gcs = gcloud.storage();
  * @returns {Object}
  */
 exports.getDownloadStream = function(bucket, key, cb) {
-	console.log('Starting download', bucket, key);
-
 	return gcs
 		.bucket(bucket)
 		.file(key)

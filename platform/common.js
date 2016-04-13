@@ -7,7 +7,7 @@ var path = require('path');
 var async = require('async');
 var tempDir = process.env['TEMP'] || require('os').tmpdir();
 
-exports.main = function(library, config, invocation) {
+exports.main = function(library, config, logger, invocation) {
 	var sourceLocation = library.getFileLocation(invocation.event);
 	var keyPrefix = sourceLocation.key.replace(/\.[^/.]+$/, '');
 	var dlFile = path.join(tempDir, 'download');
@@ -16,6 +16,8 @@ exports.main = function(library, config, invocation) {
 	
 	async.series([
 		function(cb) {
+			logger.log('Starting download:', sourceLocation.bucket, '/', sourceLocation.key);
+			
 			var dlStream = library.getDownloadStream(sourceLocation.bucket, sourceLocation.key, cb);
 
 			dlStream.on('end', function() {
@@ -25,7 +27,7 @@ exports.main = function(library, config, invocation) {
 			dlStream.pipe(fs.createWriteStream(dlFile));
 		},
 		function(cb) {
-			console.log('Starting FFprobe');
+			logger.log('Starting FFprobe');
 
 			child_process.execFile(
 				'ffprobe',
@@ -53,14 +55,14 @@ exports.main = function(library, config, invocation) {
 					if (!hasVideoStream)
 						return cb('FFprobe: no valid video stream found');
 					else {
-						console.log('Valid video stream found', stdout);
+						logger.log('Valid video stream found', stdout);
 						return cb(err, 'FFprobe finished');
 					}
 				}
 			);
 		},
 		function(cb) {
-			console.log('Starting FFmpeg');
+			logger.log('Starting FFmpeg');
 
 			child_process.execFile(
 				'ffmpeg',
@@ -85,7 +87,7 @@ exports.main = function(library, config, invocation) {
 			);
 		},
 		function(cb) {
-			console.log('Deleting download file');
+			logger.log('Deleting download file');
 			fs.unlink(dlFile, cb);
 		},
 		function(cb) {
@@ -99,7 +101,7 @@ exports.main = function(library, config, invocation) {
 					var key = [keyPrefix, format.extension].join('.');
 					var contentEncoding = null;
 
-					console.log('Uploading', format.mimeType);
+					logger.log('Uploading', format.mimeType);
 
 					async.waterfall([
 						function(cb) {
@@ -132,7 +134,7 @@ exports.main = function(library, config, invocation) {
 							);
 						},
 						function(data, cb) {
-							console.log(filename, 'complete. Deleting now.');
+							logger.log(filename, 'complete. Deleting now.');
 							async.each(rmFiles, fs.unlink, cb);
 						}
 					], cb);

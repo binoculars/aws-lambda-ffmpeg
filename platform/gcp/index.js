@@ -12,7 +12,7 @@ var common = require('../common.js');
 exports.ffmpeg = function(context, data) {
 	console.log("Reading options from data:\n", util.inspect(data, {depth: 5}));
 
-	common.main(lib, config, {
+	common.main(lib, config, console, {
 		event: data,
 		context: context,
 		// Shim

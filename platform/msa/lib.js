@@ -10,8 +10,6 @@ var blobService = azure.createBlobService();
  * @returns {Object}
  */
 exports.getDownloadStream = function(bucket, key, cb) {
-	console.log('Starting download', bucket, key);
-
 	return blobService
 		.createReadStream(bucket, key);
 };

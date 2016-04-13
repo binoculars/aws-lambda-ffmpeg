@@ -12,8 +12,6 @@ var s3 = new AWS.S3();
  * @returns {Object}
  */
 exports.getDownloadStream = function(bucket, key, cb) {
-	console.log('Starting download', bucket, key);
-
 	return s3
 		.getObject({
 			Bucket: bucket,
