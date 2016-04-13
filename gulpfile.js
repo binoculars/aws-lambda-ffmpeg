@@ -6,6 +6,7 @@ var shell = require('gulp-shell');
 var flatten = require('gulp-flatten');
 var rename = require('gulp-rename');
 var del = require('del');
+var chmod = require('gulp-chmod');
 var install = require('gulp-install');
 var zip = require('gulp-zip');
 var async = require('async');
@@ -79,14 +80,16 @@ gulp.task('npm', function() {
 
 // Now the dist directory is ready to go. Zip it.
 gulp.task('zip', function() {
-	return gulp.src(['dist/**/*', '!dist/package.json', 'dist/.*'])
+	return gulp.src(['dist/**/*', '!dist/package.json', '!**/LICENSE', '!**/*.md', 'dist/.*'])
+		.pipe(chmod(555))
 		.pipe(zip('dist.zip'))
 		.pipe(gulp.dest('./'));
 });
 
 [
 	'aws',
-	'gcp'
+	'gcp',
+	'msa'
 ].forEach(function(platform) {
 	gulp.task(platform + ':source', function() {
 		var files = [
