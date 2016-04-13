@@ -5,51 +5,9 @@ var event = require('./event.json');
 /**
  * The Context
  * 
- * @type {{succeed: context.succeed, fail: context.fail, done: context.done, getRemainingTimeInMillis: context.getRemainingTimeInMillis, functionName: string, functionVersion: string, invokedFunctionArn: string, memoryLimitInMB: number, awsRequestId: string, logGroupName: string, logStreamName: string, identity: {}}}
+ * @type {{getRemainingTimeInMillis: context.getRemainingTimeInMillis, callbackWaitsForEmptyEventLoop: boolean, functionName: string, functionVersion: string, invokedFunctionArn: string, memoryLimitInMB: number, awsRequestId: string, logGroupName: string, logStreamName: string, identity: {}}}
  */
 var context = {
-	/**
-	 * Indicates the Lambda function execution and all callbacks completed successfully.
-	 *
-	 * @type {function}
-	 * @param {Object} [result] - An optional parameter and it can be used to provide the result of the function
-	 * execution. The result provided must be JSON.stringify compatible. If AWS Lambda fails to stringify or encounters
-	 * another error, an unhandled exception is thrown, with the X-Amz-Function-Error response header set to Unhandled.
-	 */
-	succeed: function(result) {
-		console.log('Succeeded:', util.inspect(result, {depth: 5}));
-		process.exit();
-	},
-
-	/**
-	 * Indicates the Lambda function execution and all callbacks completed unsuccessfully, resulting in a handled exception.
-	 *
-	 * @type {function}
-	 * @param {Object|null} [error] - an optional parameter that you can use to provide the result of the Lambda
-	 * function execution. If the error value is non-null, the method will set the response body to the string
-	 * representation of error and also write corresponding logs to CloudWatch. If AWS Lambda fails to stringify or
-	 * encounters another error, an unhandled error, with the X-Amz-Function-Error header set to Unhandled.
-	 */
-	fail: function(error) {
-		console.error('Failed:', error);
-		process.exit(1);
-	},
-
-	/**
-	 * This method complements the succeed() and fail() methods by allowing the use of the "error first" callback
-	 * design pattern. It provides no additional functionality.
-	 *
-	 * @type {function}
-	 * @param {Object|null} [error]
-	 * @param {Object} [result]
-	 */
-	done: function(error, result) {
-		if (error)
-			context.fail(error);
-		else
-			context.succeed(result);
-	},
-
 	/**
 	 * You can use this method to check the remaining time during your function execution and take appropriate
 	 * corrective action at run time.
@@ -62,6 +20,19 @@ var context = {
 	getRemainingTimeInMillis: function() {
 		return Infinity;
 	},
+
+	/**
+	 * The default value is true. This property is useful only to modify the default behavior of the callback. By
+	 * default, the callback will wait until the Node.js runtime event loop is empty before freezing the process and
+	 * returning the results to the caller. You can set this property to false to request AWS Lambda to freeze the
+	 * process soon after the callback is called, even if there are events in the event loop. AWS Lambda will freeze
+	 * the process, any state data and the events in the Node.js event loop (any remaining events in the event loop
+	 * processed when the Lambda function is called next and if AWS Lambda chooses to use the frozen process). For more
+	 * information about callback, see Using the Callback Parameter.
+	 *
+	 * @type {boolean}
+	 */
+	callbackWaitsForEmptyEventLoop: true,
 
 	/**
 	 * Name of the Lambda function that is executing.

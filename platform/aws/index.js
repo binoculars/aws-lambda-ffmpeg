@@ -8,13 +8,14 @@ var common = require('../common.js');
  *
  * @param {Object} event - The S3 Event
  * @param {Object} context - The Lambda context
+ * @param {requestCallback} callback
  */
-exports.handler = function(event, context) {
+exports.handler = function(event, context, callback) {
 	console.log("Reading options from event:\n", util.inspect(event, {depth: 5}));
 
 	common.main(lib, config, {
 		event: event,
 		context: context,
-		callback: context.done
+		callback: callback
 	});
 };
