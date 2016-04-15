@@ -40,6 +40,7 @@ module.exports = function(gulp, prefix) {
 			'functions',
 			'deploy',
 			'ffmpeg',
+			'--entry-point', 'entryPoint',
 			'--bucket', config.functionBucket,
 			'--trigger-gs-uri', config.sourceBucket
 		].join(' '), {cwd: './dist'}, function(error, stdout, stderr) {

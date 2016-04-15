@@ -1,5 +1,5 @@
 var util = require('util');
-var cloudFunction = require('../../platform/gcp/index.js').ffmpeg;
+var cloudFunction = require('../../platform/gcp/index.js').entryPoint;
 var data = require('./event.json');
 
 /**
