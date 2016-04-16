@@ -33,20 +33,23 @@ module.exports = function(gulp, prefix) {
 		);
 	});
 	
-	gulp.task(prefix + ':deploy', function(cb) {
-		child_process.exec([
+	gulp.task(prefix + ':deploy', function() {
+		return child_process.spawnSync(
 			'gcloud',
-			'alpha', 
-			'functions',
-			'deploy',
-			'ffmpeg',
-			'--entry-point', 'entryPoint',
-			'--bucket', config.functionBucket,
-			'--trigger-gs-uri', config.sourceBucket
-		].join(' '), {cwd: './dist'}, function(error, stdout, stderr) {
-			console.log(stdout);
-			cb();
-		});
+			[
+				'alpha',
+				'functions',
+				'deploy',
+				'ffmpeg',
+				'--entry-point', 'entryPoint',
+				'--bucket', config.functionBucket,
+				'--trigger-gs-uri', config.sourceBucket
+			],
+			{
+				cwd: './dist',
+				stdio: 'inherit'
+			}
+		);
 	});
 	
 	gulp.task(prefix + ':default', function(cb) {

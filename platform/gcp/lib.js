@@ -1,9 +1,7 @@
 process.env['PATH'] += ':' + process.env['CODE_LOCATION'];
+process.env['GCLOUD_PROJECT'] = process.env['GCLOUD_PROJECT'] || process.env['GCP_PROJECT'];
 
-var path = require('path');
-var gconfig = require('./config.json').gcloud;
-gconfig.keyFilename = path.join(__dirname, gconfig.keyFilename);
-var gcloud = require('gcloud')(gconfig);
+var gcloud = require('gcloud');
 var gcs = gcloud.storage();
 
 /**
@@ -63,8 +61,7 @@ exports.uploadToBucket = function(bucket, key, fileStream, contentEncoding, cont
 		.file(key)
 		.createWriteStream(options);
 
-	fileStream
-		.pipe(writeStream)
+	fileStream.pipe(writeStream)
 		.on('error', cb)
 		.on('finish', cb);
 };
