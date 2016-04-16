@@ -2,6 +2,7 @@ var path = require('path');
 var runSequence = require('run-sequence');
 var jeditor = require("gulp-json-editor");
 var child_process = require('child_process');
+var packageInfo = require('../../package.json');
 
 var config;
 try {
@@ -13,11 +14,12 @@ try {
 module.exports = function(gulp, prefix) {
 	gulp.task(prefix + ':npm', function() {
 		return gulp.src('./package.json')
-			.pipe(jeditor({
-				"main": "./gcp/index.js",
-				"dependencies": {
-					"gcloud": "^0.30.2"
-				}
+			.pipe(jeditor(function(json) {
+				json.main = './gcp/index.js';
+				json.dependencies.gcloud = packageInfo.devDependencies.gcloud;
+				delete json.scripts;
+				delete json.devDependencies;
+				return json;
 			}))
 			.pipe(gulp.dest('./dist'));
 	});
