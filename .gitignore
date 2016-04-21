@@ -8,3 +8,4 @@ config.json
 keyfile.json
 event.json
 npm-debug.log
+.nvmrc

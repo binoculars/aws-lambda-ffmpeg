@@ -1,13 +1,12 @@
-var util = require('util');
-var lambda = require('../../platform/aws/index.js').handler;
-var event = require('./event.json');
+const lambda = require('../../platform/aws/index.js').handler;
+const event = require('./event.json');
 
 /**
  * The Context
  * 
  * @type {{getRemainingTimeInMillis: context.getRemainingTimeInMillis, callbackWaitsForEmptyEventLoop: boolean, functionName: string, functionVersion: string, invokedFunctionArn: string, memoryLimitInMB: number, awsRequestId: string, logGroupName: string, logStreamName: string, identity: {}}}
  */
-var context = {
+const context = {
 	/**
 	 * You can use this method to check the remaining time during your function execution and take appropriate
 	 * corrective action at run time.
@@ -106,4 +105,13 @@ var context = {
 	}
 };
 
-lambda(event, context);
+const callback = function(error, data) {
+	if (error)
+		console.error(error);
+	else if (data)
+		console.log(data);
+
+	process.exit(error ? 1 : 0);
+};
+
+lambda(event, context, callback);

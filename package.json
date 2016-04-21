@@ -16,7 +16,8 @@
   "author": "Barrett Harber",
   "license": "Unlicense",
   "devDependencies": {
-    "aws-sdk": "2.2.41",
+    "async": "^1.5.2",
+    "aws-sdk": "2.2.48",
     "azure-storage": "^0.10.0",
     "del": "^2.2.0",
     "gcloud": "^0.30.3",
@@ -31,7 +32,5 @@
     "gulp-zip": "^3.0.2",
     "run-sequence": "^1.0.2"
   },
-  "dependencies": {
-    "async": "^1.5.2"
-  }
+  "dependencies": {}
 }
