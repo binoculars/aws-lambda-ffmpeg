@@ -105,57 +105,63 @@ function removeDownload(logger, dlFile) {
 	return Promise.resolve();
 }
 
+function encode(logger, filename, gzip, rmFiles) {
+	return new Promise((resolve) => {
+		const readStream = fs.createReadStream(filename);
+
+		if (!gzip)
+			return resolve(readStream);
+
+		logger.log('GZIP encoding', filename);
+		const gzipFilename = filename + '.gzip';
+
+		rmFiles.push(gzipFilename);
+
+		const gzipWriteStream = fs.createWriteStream(gzipFilename);
+
+		gzipWriteStream.on('finish', () => resolve(fs.createReadStream(gzipFilename)));
+
+		readStream
+			.pipe(zlib.createGzip({level: zlib.Z_BEST_COMPRESSION}))
+			.pipe(gzipWriteStream);
+	});
+}
+
+function upload(logger, uploadFunc, fileStream, bucket,  key, encoding, mimeType) {
+	logger.log('Uploading', mimeType);
+
+	return uploadFunc(bucket, key, fileStream, encoding, mimeType);
+}
+
+function removeFiles(logger, filename, rmFiles) {
+	logger.log(filename, 'complete. Deleting now.');
+
+	return rmFiles
+		.forEach(fs.unlinkSync);
+}
+
+function uploadFile(library, config, logger, keyPrefix, type) {
+	const format = config.format[type];
+	const filename = path.join(tempDir, 'out.' + format.extension);
+	const rmFiles = [filename];
+
+	return encode(logger, filename, config.gzip, rmFiles)
+		.then(fileStream => upload(
+			logger,
+			library.uploadToBucket,
+			fileStream,
+			config.destinationBucket,
+			keyPrefix + '.' + format.extension,
+			config.gzip ? 'gzip' : null,
+			format.mimeType
+		))
+		.then(() => removeFiles(logger, filename, rmFiles));
+}
+
 function uploadFiles(library, config, logger, keyPrefix) {
 	return Promise
 		.all(Object.keys(config.format)
-			.map(type => {
-				const format = config.format[type];
-				const filename = path.join(tempDir, 'out.' + format.extension);
-				const rmFiles = [filename];
-				const key = keyPrefix + '.' + format.extension;
-				let contentEncoding = null;
-
-				logger.log('Uploading', format.mimeType);
-
-				return new Promise((resolve) => {
-					const readStream = fs.createReadStream(filename);
-
-					if (!config.gzip)
-						return resolve(readStream);
-
-					contentEncoding = 'gzip';
-					const gzipFilename = filename + '.gzip';
-
-					rmFiles.push(gzipFilename);
-
-					const gzipWriteStream = fs.createWriteStream(gzipFilename);
-
-					gzipWriteStream.on('finish', () => resolve(fs.createReadStream(gzipFilename)));
-
-					readStream
-						.pipe(zlib.createGzip({level: zlib.Z_BEST_COMPRESSION}))
-						.pipe(gzipWriteStream);
-				}).then(fileStream => {
-					return new Promise((resolve, reject) => {
-						library.uploadToBucket(
-							config.destinationBucket,
-							key,
-							fileStream,
-							contentEncoding,
-							format.mimeType,
-							(error, data) => {
-								if (error) reject(error);
-								else resolve(data);
-							}
-						);
-					});
-				}).then(() => {
-					logger.log(filename, 'complete. Deleting now.');
-
-					return rmFiles
-						.forEach(rmFile => fs.unlinkSync(rmFile));
-				});
-			})
+			.map(type => uploadFile(library, config, logger, keyPrefix, type))
 		);
 }
 

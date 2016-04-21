@@ -49,7 +49,7 @@ exports.getFileLocation = function(event) {
  * @param {string|null} contentType - The Content-Type of the file (e.g. video/mp4)
  * @param {requestCallback} cb - The callback
  */
-exports.uploadToBucket = function(bucket, key, fileStream, contentEncoding, contentType, cb) {
+exports.uploadToBucket = function(bucket, key, fileStream, contentEncoding, contentType) {
 	var params = {
 		Bucket: bucket,
 		Key: key,
@@ -61,9 +61,14 @@ exports.uploadToBucket = function(bucket, key, fileStream, contentEncoding, cont
 	if (contentEncoding)
 		params.ContentEncoding = contentEncoding;
 	
-	s3.upload(params)
-		.on('httpUploadProgress', function(evt) {
-			console.log(contentType, 'Progress:', evt.loaded, '/', evt.total, Math.round(100 * evt.loaded / evt.total) + '%');
-		})
-		.send(cb);
+	return new Promise((resolve, reject) => {
+		s3.upload(params)
+			.on('httpUploadProgress', function (evt) {
+				console.log(contentType, 'Progress:', evt.loaded, '/', evt.total, Math.round(100 * evt.loaded / evt.total) + '%');
+			})
+			.send((error, data) => {
+				if (error) reject(error);
+				else resolve(data);
+			});
+	});
 };
