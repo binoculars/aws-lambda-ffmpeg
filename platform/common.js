@@ -43,7 +43,6 @@ function ffprobe(config, logger) {
 	logger.log('Starting FFprobe');
 
 	return new Promise((resolve, reject) => {
-		const cmd = 'ffprobe';
 		const args = [
 			'-v', 'quiet',
 			'-print_format', 'json',
@@ -54,7 +53,6 @@ function ffprobe(config, logger) {
 		const opts = {
 			cwd: tempDir
 		};
-
 		const cb = (error, stdout) => {
 			if (error)
 				reject(error);
@@ -77,7 +75,7 @@ function ffprobe(config, logger) {
 			}
 		};
 
-		child_process.execFile(cmd, args, opts, cb)
+		child_process.execFile('ffprobe', args, opts, cb)
 			.on('error', reject);
 	});
 }
@@ -97,25 +95,25 @@ function ffmpeg(config, logger, keyPrefix) {
 	const scaleFilter = `scale='min(${config.videoMaxWidth.toString()}\\,iw):-2'`;
 
 	return new Promise((resolve, reject) => {
-		let cmd = 'ffmpeg';
-		let args = [
+		const args = [
 			'-y',
 			'-loglevel', 'warning',
 			'-i', 'download',
 			'-c:a', 'copy',
 			'-vf', scaleFilter,
 			'-movflags', '+faststart',
-			'-metadata', 'description=' + description,
-			'out.' + config.format.video.extension,
+			'-metadata', `description=${description}`,
+			`out.${config.format.video.extension}`,
 			'-vf', 'thumbnail',
 			'-vf', scaleFilter,
 			'-vframes', '1',
-			'out.' + config.format.image.extension
+			`out.${config.format.image.extension}`
 		];
-		let opts = {
+		const opts = {
 			cwd: tempDir
 		};
-		child_process.spawn(cmd, args, opts)
+		
+		child_process.spawn('ffmpeg', args, opts)
 			.on('message', msg => {
 				logger.log(msg);
 			})
