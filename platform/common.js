@@ -21,7 +21,7 @@ const tempDir = process.env['TEMP'] || require('os').tmpdir();
  */
 function downloadFile(downloadFunc, logger, sourceLocation, download) {
 	return new Promise((resolve) => {
-		logger.log('Starting download:', sourceLocation.bucket, '/', sourceLocation.key);
+		logger.log(`Starting download: ${sourceLocation.bucket} / ${sourceLocation.key}`);
 
 		downloadFunc(sourceLocation.bucket, sourceLocation.key)
 			.on('end', () => {
@@ -77,7 +77,6 @@ function ffprobe(config, logger) {
 			}
 		};
 
-
 		child_process.execFile(cmd, args, opts, cb)
 			.on('error', reject);
 	});
@@ -94,8 +93,8 @@ function ffprobe(config, logger) {
 function ffmpeg(config, logger, keyPrefix) {
 	logger.log('Starting FFmpeg');
 
-	let description = config.linkPrefix + '/' + keyPrefix + '.' + config.format.video.extension;
-	let scaleFilter = "scale='min(" + config.videoMaxWidth.toString() + "\\,iw):-2'";
+	const description = `${config.linkPrefix}/${keyPrefix}.${config.format.video.extension}`;
+	const scaleFilter = `scale='min(${config.videoMaxWidth.toString()}\\,iw):-2'`;
 
 	return new Promise((resolve, reject) => {
 		let cmd = 'ffmpeg';
@@ -155,7 +154,7 @@ function encode(logger, filename, gzip, rmFiles) {
 		if (!gzip)
 			return resolve(readStream);
 
-		logger.log('GZIP encoding', filename);
+		logger.log(`GZIP encoding ${filename}`);
 		const gzipFilename = filename + '.gzip';
 
 		rmFiles.push(gzipFilename);
@@ -183,7 +182,7 @@ function encode(logger, filename, gzip, rmFiles) {
  * @returns {Promise}
  */
 function upload(logger, uploadFunc, fileStream, bucket, key, encoding, mimeType) {
-	logger.log('Uploading', mimeType);
+	logger.log(`Uploading ${mimeType}`);
 
 	return uploadFunc(bucket, key, fileStream, encoding, mimeType);
 }
@@ -196,7 +195,7 @@ function upload(logger, uploadFunc, fileStream, bucket, key, encoding, mimeType)
  * @param {!Array<string>} rmFiles - The files to remove after the operation is complete
  */
 function removeFiles(logger, filename, rmFiles) {
-	logger.log(filename, 'complete. Deleting now.');
+	logger.log(`${filename} complete. Deleting now.`);
 
 	return rmFiles
 		.forEach(fs.unlinkSync);
@@ -214,7 +213,7 @@ function removeFiles(logger, filename, rmFiles) {
  */
 function uploadFile(uploadFunc, config, logger, keyPrefix, type) {
 	const format = config.format[type];
-	const filename = path.join(tempDir, 'out.' + format.extension);
+	const filename = path.join(tempDir, `out.${format.extension}`);
 	const rmFiles = [filename];
 
 	return encode(logger, filename, config.gzip, rmFiles)
