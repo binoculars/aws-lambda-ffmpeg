@@ -1,25 +1,22 @@
 process.env['PATH'] += ':' + process.env['LAMBDA_TASK_ROOT'];
 
-var AWS = require('aws-sdk');
-var s3 = new AWS.S3();
+const AWS = require('aws-sdk');
+const s3 = new AWS.S3();
 
 /**
  * Creates a readable stream from an S3 Object reference
  *
  * @param {string} bucket - The S3 Bucket
  * @param {string} key - The S3 Key
- * @param {requestCallback} cb
  * @returns {Object}
  */
-exports.getDownloadStream = function(bucket, key, cb) {
+exports.getDownloadStream = function(bucket, key) {
 	return s3
 		.getObject({
 			Bucket: bucket,
 			Key: key
 		})
-		.on('error', function(response) {
-			cb('S3 download error:', JSON.stringify(response));
-		})
+		.on('error', (error) => Promise.reject(`S3 Download Error: ${error}`))
 		.createReadStream();
 };
 
@@ -31,7 +28,7 @@ exports.getDownloadStream = function(bucket, key, cb) {
  * @returns {{bucket: string, key: string}}
  */
 exports.getFileLocation = function(event) {
-	var s3Event = event.Records[0].s3;
+	const s3Event = event.Records[0].s3;
 	
 	return {
 		bucket: s3Event.bucket.name,
@@ -50,7 +47,7 @@ exports.getFileLocation = function(event) {
  * @param {requestCallback} cb - The callback
  */
 exports.uploadToBucket = function(bucket, key, fileStream, contentEncoding, contentType) {
-	var params = {
+	const params = {
 		Bucket: bucket,
 		Key: key,
 		Body: fileStream,

@@ -1,7 +1,7 @@
-var util = require('util');
-var lib = require('./lib.js');
-var config = require('./config.json');
-var common = require('../common.js');
+const util = require('util');
+const lib = require('./lib.js');
+const config = require('./config.json');
+const common = require('../common.js');
 
 /**
  * The main handler for the AWS Lambda Function
@@ -11,7 +11,7 @@ var common = require('../common.js');
  * @param {requestCallback} callback
  */
 exports.handler = function(event, context, callback) {
-	console.log("Reading options from event:\n", util.inspect(event, {depth: 5}));
+	console.log(`Reading options from event:\n${util.inspect(event, {depth: 5})}`);
 
 	common.main(lib, config, console, {
 		event: event,
