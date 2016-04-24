@@ -1,11 +1,12 @@
-var azure = require('azure-storage');
-var blobService = azure.createBlobService();
+import {createBlobService} from 'azure-storage';
+
+const blobService = createBlobService();
 
 /**
  * Creates a readable stream from an Azure Storage blob
  *
- * @param {string} bucket - The Azure Storage container name
- * @param {string} key - The Blob name
+ * @param {!string} bucket - The Azure Storage container name
+ * @param {!string} key - The Blob name
  * @returns {Object}
  */
 export function getDownloadStream(bucket, key) {
@@ -16,7 +17,10 @@ export function getDownloadStream(bucket, key) {
 /**
  * Normalizes the location of a blob for Azure Storage
  *
- * @param {Object} event
+ * @param {!{
+ *     container: !string,
+ *     name: !string
+ * }} event
  * @returns {{bucket: string, key: string}}
  */
 export function getFileLocation(event) {
@@ -30,14 +34,13 @@ export function getFileLocation(event) {
 /**
  * Uploads a file to an Azure Storage Container
  *
- * @param {string} bucket - The Azure Storage container name
- * @param {string} key - The Blob name
- * @param {module:fs~ReadStream} fileStream - The file stream to upload
+ * @param {!string} bucket - The Azure Storage container name
+ * @param {!string} key - The Blob name
+ * @param {!module:fs~ReadStream} fileStream - The file stream to upload
  * @param {string} contentEncoding - The Content-Encoding of the file (gzip or none)
- * @param {string|null} contentType - The Content-Type of the file (e.g. video/mp4)
- * @param {requestCallback} cb - The callback
+ * @param {!string} contentType - The Content-Type of the file (e.g. video/mp4)
  */
-exports.uploadToBucket = function(bucket, key, fileStream, contentEncoding, contentType, cb) {
+export function uploadToBucket(bucket, key, fileStream, contentEncoding, contentType) {
 	var options = {
 		contentSettings: {
 			contentType: contentType,
@@ -50,7 +53,9 @@ exports.uploadToBucket = function(bucket, key, fileStream, contentEncoding, cont
 
 	var writeStream = blobService.createWriteStreamToBlockBlob(bucket, key, options);
 
-	fileStream.pipe(writeStream)
-		.on('error', cb)
-		.on('finish', cb);
-};
+	return new Promise((resolve, reject) =>
+		fileStream.pipe(writeStream)
+			.on('error', reject)
+			.on('finish', resolve)
+	);
+}

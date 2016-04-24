@@ -144,7 +144,7 @@ function removeDownload(logger, localFilePath) {
  * @param {!string} filename - The filename of the file to encode
  * @param {boolean} gzip - Whether to GZIP-encode the file, or pass it through
  * @param {!Array<string>} rmFiles - The files to remove after the operation is complete
- * @returns {Promise<fs.streamReadable>}
+ * @returns {Promise<module:fs~ReadStream>}
  */
 function encode(logger, filename, gzip, rmFiles) {
 	return new Promise((resolve) => {
@@ -173,7 +173,7 @@ function encode(logger, filename, gzip, rmFiles) {
  *
  * @param {!{log: !function}} logger - The platform logger
  * @param {!function} uploadFunc - The function to upload a processed file
- * @param {!fs.streamReaddable} - The stream of a processed file
+ * @param {!module:fs~ReadStream} fileStream - The stream of a processed file
  * @param {!string} bucket - The remote bucket
  * @param {!string} key - The remote key/file path
  * @param {string} encoding - The Content Encoding

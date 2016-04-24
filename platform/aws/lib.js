@@ -6,8 +6,8 @@ const s3 = new S3();
 /**
  * Creates a readable stream from an S3 Object reference
  *
- * @param {string} bucket - The S3 Bucket
- * @param {string} key - The S3 Key
+ * @param {!string} bucket - The S3 Bucket
+ * @param {!string} key - The S3 Key
  * @returns {Object}
  */
 export function getDownloadStream(bucket, key) {
@@ -23,7 +23,18 @@ export function getDownloadStream(bucket, key) {
 /**
  * Normalizes the location of a cloud storage object for S3
  * 
- * @param {Object} event
+ * @param {!{
+ *     Records: [{
+ *         s3: {
+ *             bucket: {
+ *                 name: !string
+ *             },
+ *             object: {
+ *                 key: !string
+ *             }
+ *         }
+ *     }]
+ * }} event
  * @returns {{bucket: string, key: string}}
  */
 export function getFileLocation(event) {
@@ -38,12 +49,11 @@ export function getFileLocation(event) {
 /**
  * Uploads a file to an S3 Bucket
  *
- * @param {string} bucket - The S3 bucket name
- * @param {string} key - The S3 key
- * @param {module:fs~ReadStream} fileStream - The file stream to upload
+ * @param {!string} bucket - The S3 bucket name
+ * @param {!string} key - The S3 key
+ * @param {!module:fs~ReadStream} fileStream - The file stream to upload
  * @param {string} contentEncoding - The Content-Encoding of the file (gzip or none)
- * @param {string|null} contentType - The Content-Type of the file (e.g. video/mp4)
- * @param {requestCallback} cb - The callback
+ * @param {!string} contentType - The Content-Type of the file (e.g. video/mp4)
  */
 export function uploadToBucket(bucket, key, fileStream, contentEncoding, contentType) {
 	const params = {
