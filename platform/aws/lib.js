@@ -1,6 +1,7 @@
 process.env['PATH'] += ':' + process.env['LAMBDA_TASK_ROOT'];
 
 import {S3} from 'aws-sdk';
+
 const s3 = new S3();
 
 /**
@@ -34,7 +35,7 @@ export function getDownloadStream(bucket, key) {
  *             }
  *         }
  *     }]
- * }} event
+ * }} event - The S3 Event
  * @returns {{bucket: string, key: string}}
  */
 export function getFileLocation(event) {

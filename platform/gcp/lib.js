@@ -2,6 +2,7 @@ process.env['PATH'] += ':' + process.env['CODE_LOCATION'];
 process.env['GCLOUD_PROJECT'] = process.env['GCLOUD_PROJECT'] || process.env['GCP_PROJECT'];
 
 import {storage} from 'gcloud';
+
 const gcs = storage();
 
 /**

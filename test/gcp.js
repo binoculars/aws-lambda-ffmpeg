@@ -1,13 +1,13 @@
-var util = require('util');
-var cloudFunction = require('../../platform/gcp/index.js').entryPoint;
-var data = require('./event.json');
+const util = require('util');
+const cloudFunction = require('../platform/gcp/index.js').entryPoint;
+const data = require('../event/gcp.json');
 
 /**
  * See https://cloud.google.com/functions/writing
  * 
  * @type {{success: context.success, failure: context.failure, done: context.done}}
  */
-var context = {
+const context = {
 	/**
 	 * Called when your function completes successfully. An optional message argument may be passed to success that
 	 * will be returned when the function is executed synchronously.

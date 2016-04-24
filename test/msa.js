@@ -1,10 +1,26 @@
-var util = require('util');
-var azureFunction = require('../../platform/msa/index.js').ffmpeg;
-var event = require('./event.json');
+const azureFunction = require('../platform/msa/index.js').ffmpeg;
+const event = require('../event/msa.json');
 
-var context = {
+const context = {
+	/**
+	 * Bindings
+	 *
+	 * @type Object
+	 */
 	bindings: {},
+
+	/**
+	 * The logger function
+	 * @type function
+	 */
 	log: console.log,
+
+	/**
+	 * The callback
+	 *
+	 * @param error
+	 * @param propertyBag
+	 */
 	done: function(error, propertyBag) {
 		if (error) {
 			console.error(error);
