@@ -1,7 +1,8 @@
-var util = require('util');
-var lib = require('./lib.js');
-var config = require('./config.json');
-var common = require('../common.js');
+import {inspect} from 'util';
+import {main} from '../common.js';
+import * as lib from './lib.js';
+
+const config = require(process.env.CONFIG_FILE || './config.json');
 
 /**
  * The main Microsoft Azure Function
@@ -9,10 +10,10 @@ var common = require('../common.js');
  * @param {Object} context - The event context
  * @param {Object} data - The event data
  */
-exports.ffmpeg = function(context, data) {
-	context.log("Reading options from data:\n", util.inspect(data, {depth: 5}));
+export function ffmpeg(context, data) {
+	console.log(`Reading options from event:\n${inspect(event, {depth: 5})}`);
 
-	common.main(lib, config, context, {
+	main(lib, config, context, {
 		event: data,
 		context: context,
 		callback: context.done

@@ -2,13 +2,14 @@
 
 process.env['NODE_ENV'] = 'production';
 
-const child_process = require('child_process');
-const fs = require('fs');
-const zlib = require('zlib');
-const path = require('path');
+import {spawn, execFile} from 'child_process';
+import {unlinkSync, createReadStream, createWriteStream} from 'fs';
+import {createGzip} from 'zlib';
+import {join} from 'path';
+import {tmpdir} from 'os';
 
 /** @type string **/
-const tempDir = process.env['TEMP'] || require('os').tmpdir();
+const tempDir = process.env['TEMP'] || tmpdir();
 
 /**
  * Downloads the file to the local temp directory
@@ -28,7 +29,7 @@ function downloadFile(downloadFunc, logger, sourceLocation, download) {
 				logger.log('Download finished');
 				resolve();
 			})
-			.pipe(fs.createWriteStream(download));
+			.pipe(createWriteStream(download));
 	});
 }
 
@@ -75,7 +76,7 @@ function ffprobe(config, logger) {
 			}
 		};
 
-		child_process.execFile('ffprobe', args, opts, cb)
+		execFile('ffprobe', args, opts, cb)
 			.on('error', reject);
 	});
 }
@@ -113,7 +114,7 @@ function ffmpeg(config, logger, keyPrefix) {
 			cwd: tempDir
 		};
 		
-		child_process.spawn('ffmpeg', args, opts)
+		spawn('ffmpeg', args, opts)
 			.on('message', msg => {
 				logger.log(msg);
 			})
@@ -131,7 +132,7 @@ function ffmpeg(config, logger, keyPrefix) {
  */
 function removeDownload(logger, localFilePath) {
 	logger.log('Deleting download file');
-	fs.unlinkSync(localFilePath);
+	unlinkSync(localFilePath);
 
 	return Promise.resolve();
 }
@@ -147,7 +148,7 @@ function removeDownload(logger, localFilePath) {
  */
 function encode(logger, filename, gzip, rmFiles) {
 	return new Promise((resolve) => {
-		const readStream = fs.createReadStream(filename);
+		const readStream = createReadStream(filename);
 
 		if (!gzip)
 			return resolve(readStream);
@@ -157,12 +158,12 @@ function encode(logger, filename, gzip, rmFiles) {
 
 		rmFiles.push(gzipFilename);
 
-		const gzipWriteStream = fs.createWriteStream(gzipFilename);
+		const gzipWriteStream = createWriteStream(gzipFilename);
 
-		gzipWriteStream.on('finish', () => resolve(fs.createReadStream(gzipFilename)));
+		gzipWriteStream.on('finish', () => resolve(createReadStream(gzipFilename)));
 
 		readStream
-			.pipe(zlib.createGzip({level: zlib.Z_BEST_COMPRESSION}))
+			.pipe(createGzip({level: zlib.Z_BEST_COMPRESSION}))
 			.pipe(gzipWriteStream);
 	});
 }
@@ -196,7 +197,7 @@ function removeFiles(logger, filename, rmFiles) {
 	logger.log(`${filename} complete. Deleting now.`);
 
 	return rmFiles
-		.forEach(fs.unlinkSync);
+		.forEach(unlinkSync);
 }
 
 /**
@@ -211,7 +212,7 @@ function removeFiles(logger, filename, rmFiles) {
  */
 function uploadFile(uploadFunc, config, logger, keyPrefix, type) {
 	const format = config.format[type];
-	const filename = path.join(tempDir, `out.${format.extension}`);
+	const filename = join(tempDir, `out.${format.extension}`);
 	const rmFiles = [filename];
 
 	return encode(logger, filename, config.gzip, rmFiles)
@@ -258,10 +259,10 @@ function uploadFiles(uploadFunc, config, logger, keyPrefix) {
  *     callback: !function
  * }} invocation - The invocation
  */
-exports.main = function(library, config, logger, invocation) {
+export function main(library, config, logger, invocation) {
 	const sourceLocation = library.getFileLocation(invocation.event);
 	const keyPrefix = sourceLocation.key.replace(/\.[^/.]+$/, '');
-	const localFilePath = path.join(tempDir, 'download');
+	const localFilePath = join(tempDir, 'download');
 
 	downloadFile(library.getDownloadStream, logger, sourceLocation, localFilePath)
 		.then(() => ffprobe(config, logger))

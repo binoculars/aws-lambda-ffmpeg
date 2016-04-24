@@ -1,44 +1,34 @@
-var http = require('http');
-var fs = require('fs');
-var path = require('path');
-var gulp = require('gulp');
-var shell = require('gulp-shell');
-var flatten = require('gulp-flatten');
-var rename = require('gulp-rename');
-var del = require('del');
-var chmod = require('gulp-chmod');
-var install = require('gulp-install');
-var zip = require('gulp-zip');
-var async = require('async');
+'use strict';
 
-var filename = './build/ffmpeg-git-64bit-static.tar.xz';
-var fileURL = 'http://johnvansickle.com/ffmpeg/builds/ffmpeg-git-64bit-static.tar.xz';
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const gulp = require('gulp');
+const shell = require('gulp-shell');
+const rename = require('gulp-rename');
+const del = require('del');
+const chmod = require('gulp-chmod');
+const install = require('gulp-install');
+const zip = require('gulp-zip');
+const babel = require('gulp-babel');
 
-gulp.task('postinstall', function(cb) {
-	async.reject(
-		['config.json', 'test_event.json'],
-		fs.exists,
-		function(files) {
-			async.map(files, function(file, cb) {
-				return cb(null, gulp.src(file.replace(/\.json/, '_sample.json'))
-						.pipe(rename(file))
-						.pipe(gulp.dest('.'))
-				);
-			}, cb);
-		}
-	);
-});
+const buildDir = 'build';
+const filename = path.join(buildDir, 'ffmpeg-git-64bit-static.tar.xz');
+const fileURL = 'http://johnvansickle.com/ffmpeg/builds/ffmpeg-git-64bit-static.tar.xz';
 
 gulp.task('download-ffmpeg', function(cb) {
-	if(!fs.existsSync('./build')) {
-		fs.mkdirSync('./build');
+	try {
+		fs.accessSync(buildDir);
+	} catch (e) {
+		fs.mkdirSync(buildDir);
 	}
 
-	var file = fs.createWriteStream(filename);
-	http.get(fileURL, function(response) {
+	const file = fs.createWriteStream(filename);
+
+	http.get(fileURL, response => {
 		response.pipe(file);
 
-		file.on('finish', function() {
+		file.on('finish', () => {
 			file.close();
 			cb();
 		})
@@ -49,21 +39,29 @@ gulp.task('download-ffmpeg', function(cb) {
 // LZMA-native, node-xz, decompress-tarxz. None of them work very well with this.
 // This will probably work well for OS X and Linux, but maybe not Windows without Cygwin.
 gulp.task('untar-ffmpeg', shell.task([
-	'tar -xvf ' + filename + ' -C ./build'
+	`tar -xvf ${filename} -C ./build`
 ]));
 
-gulp.task('copy-ffmpeg', function() {
-	return gulp.src(['build/ffmpeg-*/ffmpeg', 'build/ffmpeg-*/ffprobe'])
-		.pipe(flatten())
-		.pipe(gulp.dest('./dist'));
+gulp.task('copy-ffmpeg', () => {
+	const wd = fs
+		.readdirSync(buildDir)
+		.filter(item => fs
+			.statSync(path.join(buildDir, item))
+			.isDirectory()
+		)[0];
+
+	return gulp
+		.src([
+			'ffmpeg',
+			'ffprobe'
+		], {
+			cwd: path.join(buildDir, wd)
+		})
+		.pipe(gulp.dest('dist'));
 });
 
-/*
- From: https://medium.com/@AdamRNeary/a-gulp-workflow-for-amazon-lambda-61c2afd723b6
- */
-
 // First we need to clean out the dist folder and remove the compiled zip file.
-gulp.task('clean', function() {
+gulp.task('clean', () => {
 	return del([
 		'./build/*',
 		'./dist/*',
@@ -72,42 +70,64 @@ gulp.task('clean', function() {
 });
 
 // Here we want to install npm packages to dist, ignoring devDependencies.
-gulp.task('npm', function() {
-	return gulp.src('./package.json')
+gulp.task('npm', () => {
+	return gulp
+		.src('./package.json')
 		.pipe(gulp.dest('./dist'))
 		.pipe(install({production: true}));
 });
 
 // Now the dist directory is ready to go. Zip it.
-gulp.task('zip', function() {
-	return gulp.src(['dist/**/*', '!dist/package.json', '!**/LICENSE', '!**/*.md', 'dist/.*'])
+gulp.task('zip', () => {
+	return gulp
+		.src([
+			'dist/**/*',
+			'!dist/package.json',
+			'!**/LICENSE',
+			'!**/*.md',
+			'dist/.*'
+		])
 		.pipe(chmod(555))
 		.pipe(zip('dist.zip'))
 		.pipe(gulp.dest('./'));
 });
 
-[
-	'aws',
-	'gcp',
-	'msa'
-].forEach(function(platform) {
-	gulp.task(platform + ':source', function() {
-		var files = [
-			'common.js',
-			platform + '/index.js',
-			platform + '/lib.js',
-			platform + '/config.json',
-			platform + '/keyfile.json'
-		];
-		var baseDir = 'platform';
-		var options = {
-			base: baseDir,
-			cwd: baseDir
-		};
+const baseDir = 'platform';
 
-		return gulp.src(files, options)
-			.pipe(gulp.dest('dist'));
+fs.readdirSync(baseDir)
+	.filter(item => fs
+		.statSync(path.join(baseDir, item))
+		.isDirectory()
+	)
+	.forEach((platform) => {
+		gulp.task(`${platform}:transpile`, () => {
+			return gulp
+				.src([
+					'common.js',
+					`${platform}/index.js`,
+					`${platform}/lib.js`
+				], {
+					base: baseDir,
+					cwd: baseDir
+				})
+				.pipe(babel({
+					presets: [
+						platform === 'gcp' ? 'es2015' : 'es2015-node4'
+					]
+				}))
+				.pipe(gulp.dest('dist'));
+		});
+
+		gulp.task(`${platform}:config`, () => {
+			return gulp
+				.src(`config/${platform}.json`)
+				.pipe(gulp.dest('dist'));
+		});
+		
+		gulp.task(`${platform}:source`, [
+			`${platform}:transpile`,
+			`${platform}:config`
+		]);
+
+		require(path.join(__dirname, baseDir, platform, 'gulpfile.js'))(gulp, platform);
 	});
-
-	require(path.join(__dirname, 'platform', platform, 'gulpfile.js'))(gulp, platform);
-});

@@ -1,7 +1,8 @@
-var util = require('util');
-var lib = require('./lib.js');
-var config = require('./config.json');
-var common = require('../common.js');
+import {inspect} from 'util';
+import {main} from '../common.js';
+import * as lib from './lib.js';
+
+const config = require(process.env.CONFIG_FILE || './config.json');
 
 /**
  * The main Google Cloud Function
@@ -9,7 +10,7 @@ var common = require('../common.js');
  * @param {Object} context - The event context
  * @param {Object} data - The event data
  */
-exports.entryPoint = function(context, data) {
+export function entryPoint(context, data) {
 	console.log("Reading options from data:\n", util.inspect(data, {depth: 5}));
 
 	common.main(lib, config, console, {

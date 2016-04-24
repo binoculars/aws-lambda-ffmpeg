@@ -1,7 +1,7 @@
 process.env['PATH'] += ':' + process.env['LAMBDA_TASK_ROOT'];
 
-const AWS = require('aws-sdk');
-const s3 = new AWS.S3();
+import {S3} from 'aws-sdk';
+const s3 = new S3();
 
 /**
  * Creates a readable stream from an S3 Object reference
@@ -10,7 +10,7 @@ const s3 = new AWS.S3();
  * @param {string} key - The S3 Key
  * @returns {Object}
  */
-exports.getDownloadStream = function(bucket, key) {
+export function getDownloadStream(bucket, key) {
 	return s3
 		.getObject({
 			Bucket: bucket,
@@ -18,8 +18,7 @@ exports.getDownloadStream = function(bucket, key) {
 		})
 		.on('error', (error) => Promise.reject(`S3 Download Error: ${error}`))
 		.createReadStream();
-};
-
+}
 
 /**
  * Normalizes the location of a cloud storage object for S3
@@ -27,14 +26,14 @@ exports.getDownloadStream = function(bucket, key) {
  * @param {Object} event
  * @returns {{bucket: string, key: string}}
  */
-exports.getFileLocation = function(event) {
+export function getFileLocation(event) {
 	const s3Event = event.Records[0].s3;
 	
 	return {
 		bucket: s3Event.bucket.name,
 		key: decodeURIComponent(s3Event.object.key).replace(/\+/g, ' ')
 	};
-};
+}
 
 /**
  * Uploads a file to an S3 Bucket
@@ -46,7 +45,7 @@ exports.getFileLocation = function(event) {
  * @param {string|null} contentType - The Content-Type of the file (e.g. video/mp4)
  * @param {requestCallback} cb - The callback
  */
-exports.uploadToBucket = function(bucket, key, fileStream, contentEncoding, contentType) {
+export function uploadToBucket(bucket, key, fileStream, contentEncoding, contentType) {
 	const params = {
 		Bucket: bucket,
 		Key: key,
@@ -68,4 +67,4 @@ exports.uploadToBucket = function(bucket, key, fileStream, contentEncoding, cont
 				else resolve(data);
 			});
 	});
-};
+}

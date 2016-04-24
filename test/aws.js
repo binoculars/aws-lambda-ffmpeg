@@ -1,5 +1,5 @@
-const lambda = require('../../platform/aws/index.js').handler;
-const event = require('./event.json');
+const lambda = require('../platform/aws/index.js').handler;
+const event = require('../event/aws.json');
 
 /**
  * The Context

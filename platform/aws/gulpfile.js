@@ -1,37 +1,39 @@
-var fs = require('fs');
-var path = require('path');
-var async = require('async');
-var runSequence = require('run-sequence');
-var AWS = require('aws-sdk');
-var s3 = new AWS.S3();
-var lambda = new AWS.Lambda();
-var cloudFormation = new AWS.CloudFormation();
-var packageInfo = require('../../package.json');
+'use strict';
 
-var config;
+const fs = require('fs');
+const path = require('path');
+const runSequence = require('run-sequence');
+const AWS = require('aws-sdk');
+
+const s3 = new AWS.S3();
+const lambda = new AWS.Lambda();
+const cloudFormation = new AWS.CloudFormation();
+const packageInfo = require('../../package.json');
+
+let config = {};
 try {
-	config = require(path.join(__dirname, 'config.json'));
+	config = require('../../config/aws.json');
 } catch (ex) {
 	config = {};
 }
 
-var bucket = config.functionBucket;
-var key = packageInfo.name + '.zip';
+const bucket = config.functionBucket;
+const key = `${packageInfo.name}.zip`;
 
 module.exports = function(gulp, prefix) {
 	// Upload the function code to S3
-	gulp.task(prefix + ':upload', function (cb) {
-		s3.upload({
+	gulp.task(`${prefix}:upload`, () => {
+		return s3.upload({
 			Bucket: bucket,
 			Key: key,
 			Body: fs.createReadStream('dist.zip')
-		}, cb);
+		}).promise();
 	});
 
-	var stackName = packageInfo.name;
+	const stackName = packageInfo.name;
 
 	// Deploy the CloudFormation Stack
-	gulp.task(prefix + ':deployStack', function(cb) {
+	gulp.task(`${prefix}:deployStack`, cb => {
 		cloudFormation.describeStacks({
 			StackName: stackName
 		}, function(err) {
@@ -66,51 +68,46 @@ module.exports = function(gulp, prefix) {
 	});
 
 	// Once the stack is deployed, this will update the function if the code is changed without recreating the stack
-	gulp.task(prefix + ':updateCode', function(cb) {
-		async.waterfall([
-			function(cb) {
-				cloudFormation.describeStackResource({
-					StackName: stackName,
-					LogicalResourceId: 'Lambda'
-				}, cb);
-			},
-			function(data, cb) {
-				lambda.updateFunctionCode({
-					FunctionName: data.StackResourceDetail.PhysicalResourceId,
-					S3Bucket: bucket,
-					S3Key: key
-				}, cb);
-			}
-		], cb);
+	gulp.task(`${prefix}:updateCode`, () => {
+		return cloudFormation
+			.describeStackResource({
+				StackName: stackName,
+				LogicalResourceId: 'Lambda'
+			}).promise()
+			.then(lambda.updateFunctionCode({
+				FunctionName: data.StackResourceDetail.PhysicalResourceId,
+				S3Bucket: bucket,
+				S3Key: key
+			}).promise());
 	});
 
 	// Builds the function and uploads
-	gulp.task(prefix + ':build-upload', function(cb) {
+	gulp.task(`${prefix}:build-upload`, cb => {
 		return runSequence(
 			'clean',
-			['download-ffmpeg', prefix + ':source', 'npm'],
+			['download-ffmpeg', `${prefix}:source`, 'npm'],
 			'untar-ffmpeg',
 			'copy-ffmpeg',
 			'zip',
-			prefix + ':upload',
+			`${prefix}:upload`,
 			cb
 		);
 	});
 
 	// For an already created stack
-	gulp.task(prefix + ':update', function(cb) {
+	gulp.task(`${prefix}:update`, cb => {
 		return runSequence(
-			prefix + ':build-upload',
-			prefix + ':updateCode',
+			`${prefix}:build-upload`,
+			`${prefix}:updateCode`,
 			cb
 		);
 	});
 
 	// For a new stack (or you change cloudformation.json)
-	gulp.task(prefix + ':default', function(cb) {
+	gulp.task(`${prefix}:default`, cb => {
 		return runSequence(
-			prefix + ':build-upload',
-			prefix + ':deployStack',
+			`${prefix}:build-upload`,
+			`${prefix}:deployStack`,
 			cb
 		);
 	});

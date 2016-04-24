@@ -6,13 +6,12 @@ var blobService = azure.createBlobService();
  *
  * @param {string} bucket - The Azure Storage container name
  * @param {string} key - The Blob name
- * @param {requestCallback} cb
  * @returns {Object}
  */
-exports.getDownloadStream = function(bucket, key, cb) {
+export function getDownloadStream(bucket, key) {
 	return blobService
 		.createReadStream(bucket, key);
-};
+}
 
 /**
  * Normalizes the location of a blob for Azure Storage
@@ -20,13 +19,13 @@ exports.getDownloadStream = function(bucket, key, cb) {
  * @param {Object} event
  * @returns {{bucket: string, key: string}}
  */
-exports.getFileLocation = function(event) {
+export function getFileLocation(event) {
 	// TODO Fix this when we know what the real event looks like
 	return {
 		bucket: event.container,
 		key: event.name
 	};
-};
+}
 
 /**
  * Uploads a file to an Azure Storage Container
