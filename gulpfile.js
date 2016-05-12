@@ -16,7 +16,7 @@ const buildDir = 'build';
 const filename = path.join(buildDir, 'ffmpeg-git-64bit-static.tar.xz');
 const fileURL = 'http://johnvansickle.com/ffmpeg/builds/ffmpeg-git-64bit-static.tar.xz';
 
-gulp.task('download-ffmpeg', function(cb) {
+gulp.task('download-ffmpeg', cb => {
 	try {
 		fs.accessSync(buildDir);
 	} catch (e) {
@@ -61,36 +61,34 @@ gulp.task('copy-ffmpeg', () => {
 });
 
 // First we need to clean out the dist folder and remove the compiled zip file.
-gulp.task('clean', () => {
-	return del([
+gulp.task('clean', () =>
+	del([
 		'./build/*',
 		'./dist/*',
 		'./dist.zip'
-	]);
-});
+	])
+);
 
 // Here we want to install npm packages to dist, ignoring devDependencies.
-gulp.task('npm', () => {
-	return gulp
-		.src('./package.json')
-		.pipe(gulp.dest('./dist'))
-		.pipe(install({production: true}));
-});
+gulp.task('npm', () => gulp
+	.src('./package.json')
+	.pipe(gulp.dest('./dist'))
+	.pipe(install({production: true}))
+);
 
 // Now the dist directory is ready to go. Zip it.
-gulp.task('zip', () => {
-	return gulp
-		.src([
-			'dist/**/*',
-			'!dist/package.json',
-			'!**/LICENSE',
-			'!**/*.md',
-			'dist/.*'
-		])
-		.pipe(chmod(555))
-		.pipe(zip('dist.zip'))
-		.pipe(gulp.dest('./'));
-});
+gulp.task('zip', () => gulp
+	.src([
+		'dist/**/*',
+		'!dist/package.json',
+		'!**/LICENSE',
+		'!**/*.md',
+		'dist/.*'
+	])
+	.pipe(chmod(555))
+	.pipe(zip('dist.zip'))
+	.pipe(gulp.dest('./'))
+);
 
 const baseDir = 'platform';
 
@@ -99,30 +97,29 @@ fs.readdirSync(baseDir)
 		.statSync(path.join(baseDir, item))
 		.isDirectory()
 	)
-	.forEach((platform) => {
-		gulp.task(`${platform}:transpile`, () => {
-			return gulp
-				.src([
-					'common.js',
-					`${platform}/index.js`,
-					`${platform}/lib.js`
-				], {
-					base: baseDir,
-					cwd: baseDir
-				})
-				.pipe(babel({
-					presets: [
-						platform === 'gcp' ? 'es2015' : 'es2015-node4'
-					]
-				}))
-				.pipe(gulp.dest('dist'));
-		});
+	.forEach(platform => {
+		gulp.task(`${platform}:transpile`, () => gulp
+			.src([
+				'common.js',
+				`${platform}/index.js`,
+				`${platform}/lib.js`
+			], {
+				base: baseDir,
+				cwd: baseDir
+			})
+			.pipe(babel({
+				presets: [
+					// TODO remove this when GCF updates to Node v4
+					platform === 'gcp' ? 'es2015' : 'es2015-node4'
+				]
+			}))
+			.pipe(gulp.dest('dist'))
+		);
 
-		gulp.task(`${platform}:config`, () => {
-			return gulp
-				.src(`config/${platform}.json`)
-				.pipe(gulp.dest('dist'));
-		});
+		gulp.task(`${platform}:config`, () => gulp
+			.src(`config/${platform}.json`)
+			.pipe(gulp.dest('dist'))
+		);
 		
 		gulp.task(`${platform}:source`, [
 			`${platform}:transpile`,

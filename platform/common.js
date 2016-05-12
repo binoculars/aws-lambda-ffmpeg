@@ -4,7 +4,7 @@ process.env['NODE_ENV'] = 'production';
 
 import {spawn, execFile} from 'child_process';
 import {unlinkSync, createReadStream, createWriteStream} from 'fs';
-import {createGzip} from 'zlib';
+import {createGzip, Z_BEST_COMPRESSION} from 'zlib';
 import {join} from 'path';
 import {tmpdir} from 'os';
 
@@ -21,7 +21,7 @@ const tempDir = process.env['TEMP'] || tmpdir();
  * @returns {Promise}
  */
 function downloadFile(downloadFunc, logger, sourceLocation, download) {
-	return new Promise((resolve) => {
+	return new Promise((resolve, reject) => {
 		logger.log(`Starting download: ${sourceLocation.bucket} / ${sourceLocation.key}`);
 
 		downloadFunc(sourceLocation.bucket, sourceLocation.key)
@@ -29,6 +29,7 @@ function downloadFile(downloadFunc, logger, sourceLocation, download) {
 				logger.log('Download finished');
 				resolve();
 			})
+			.on('error', reject)
 			.pipe(createWriteStream(download));
 	});
 }
@@ -63,10 +64,10 @@ function ffprobe(config, logger) {
 			const outputObj = JSON.parse(stdout);
 			const maxDuration = config.videoMaxDuration;
 
-			const hasVideoStream = outputObj.streams.some((stream) => {
-				return stream.codec_type === 'video' &&
-					(stream.duration || outputObj.format.duration) <= maxDuration;
-			});
+			const hasVideoStream = outputObj.streams.some(stream =>
+				stream.codec_type === 'video' &&
+				(stream.duration || outputObj.format.duration) <= maxDuration
+			);
 
 			if (!hasVideoStream)
 				reject('FFprobe: no valid video stream found');
@@ -115,9 +116,7 @@ function ffmpeg(config, logger, keyPrefix) {
 		};
 		
 		spawn('ffmpeg', args, opts)
-			.on('message', msg => {
-				logger.log(msg);
-			})
+			.on('message', msg => logger.log(msg))
 			.on('error', reject)
 			.on('close', resolve);
 	});
@@ -163,7 +162,7 @@ function encode(logger, filename, gzip, rmFiles) {
 		gzipWriteStream.on('finish', () => resolve(createReadStream(gzipFilename)));
 
 		readStream
-			.pipe(createGzip({level: zlib.Z_BEST_COMPRESSION}))
+			.pipe(createGzip({level: Z_BEST_COMPRESSION}))
 			.pipe(gzipWriteStream);
 	});
 }
