@@ -11,17 +11,17 @@ const config = require(process.env.CONFIG_FILE || './config.json');
  * @param {Object} data - The event data
  */
 export function entryPoint(context, data) {
-	console.log("Reading options from data:\n", util.inspect(data, {depth: 5}));
+	console.log(`Reading options from data:\n${inspect(data, {depth: 5})}`);
 
-	common.main(lib, config, console, {
+	main(lib, config, console, {
 		event: data,
 		context: context,
 		// Shim
-		callback: function(error, result) {
+		callback: (error, result) => {
 			if (error)
 				context.failure(error);
 			else
-				context.succeed(result);
+				context.success(result);
 		}
 	});
-};
+}

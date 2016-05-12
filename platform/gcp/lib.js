@@ -1,9 +1,9 @@
 process.env['PATH'] += ':' + process.env['CODE_LOCATION'];
 process.env['GCLOUD_PROJECT'] = process.env['GCLOUD_PROJECT'] || process.env['GCP_PROJECT'];
 
-import {storage} from 'gcloud';
+import * as gloud from 'gcloud';
 
-const gcs = storage();
+const gcs = gloud.storage();
 
 /**
  * Creates a readable stream from a GCS Object reference
