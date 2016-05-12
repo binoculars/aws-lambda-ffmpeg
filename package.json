@@ -5,7 +5,7 @@
   "description": "AWS Lambda function to resize video and generate a thumbnail",
   "main": "index.js",
   "scripts": {
-    "postinstall": "cp -n config_samples/* config/",
+    "postinstall": "node scripts/postinstall.js",
     "test": "node test.js"
   },
   "keywords": [
@@ -16,8 +16,7 @@
   "author": "Barrett Harber",
   "license": "Unlicense",
   "devDependencies": {
-    "async": "^1.5.2",
-    "aws-sdk": "^2.3.5",
+    "aws-sdk": "2.3.8",
     "azure-storage": "^0.10.0",
     "babel": "^6.5.2",
     "babel-cli": "^6.7.7",
