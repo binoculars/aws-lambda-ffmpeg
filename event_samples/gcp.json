@@ -1,0 +1,20 @@
+{
+  "kind": "storage#object",
+  "resourceState": "exists",
+  "id": "source-bucket/my-file.mp4",
+  "selfLink": "https://www.googleapis.com/storage/v1/b/source-bucket/o/my-file.mp4",
+  "name": "my-file.mp4",
+  "bucket": "source-bucket",
+  "generation": "1459106452650000",
+  "metageneration": "1",
+  "contentType": "video/mp4",
+  "updated": "2016-03-27T19:20:52.649Z",
+  "size": "1234567",
+  "md5Hash": "exampleJlNTZjMThjYWQ1Y2U5ZGQ3M2Q0ODdlZDY3ZTc=",
+  "mediaLink": "https://www.googleapis.com/storage/v1/b/source-bucket/o/my-file.mp4?generation=1459106452650000&alt=media",
+  "owner": {
+    "entity": "user-deadbeef00",
+    "entityId": "deadbeef00"
+  },
+  "crc32c": "Pjdb/A=="
+}

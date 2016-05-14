@@ -1,9 +1,10 @@
 dist/
 build/
-
 .idea/
 node_modules/
+config/
+event/
 dist.zip
-config.json
-test_event.json
+keyfile.json
 npm-debug.log
+.nvmrc

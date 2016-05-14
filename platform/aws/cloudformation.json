@@ -122,8 +122,8 @@
 					]
 				},
 				"Timeout": 30,
-				"Handler": "index.handler",
-				"Runtime": "nodejs",
+				"Handler": "aws/index.handler",
+				"Runtime": "nodejs4.3",
 				"MemorySize": 1536
 			}
 		},

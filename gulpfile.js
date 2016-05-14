@@ -1,54 +1,34 @@
-var http = require('http');
-var fs = require('fs');
-var gulp = require('gulp');
-var gutil = require('gulp-util');
-var shell = require('gulp-shell');
-var flatten = require('gulp-flatten');
-var rename = require('gulp-rename');
-var del = require('del');
-var install = require('gulp-install');
-var zip = require('gulp-zip');
-var AWS = require('aws-sdk');
-var runSequence = require('run-sequence');
-var async = require('async');
-var s3 = new AWS.S3();
-var lambda = new AWS.Lambda();
+'use strict';
 
-var config;
-try {
-	config = require('./config.json');
-} catch (ex) {
-	config = {};
-}
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const gulp = require('gulp');
+const shell = require('gulp-shell');
+const rename = require('gulp-rename');
+const del = require('del');
+const chmod = require('gulp-chmod');
+const install = require('gulp-install');
+const zip = require('gulp-zip');
+const babel = require('gulp-babel');
 
-var filename = './build/ffmpeg-git-64bit-static.tar.xz';
-var fileURL = 'http://johnvansickle.com/ffmpeg/builds/ffmpeg-git-64bit-static.tar.xz';
+const buildDir = 'build';
+const filename = path.join(buildDir, 'ffmpeg-git-64bit-static.tar.xz');
+const fileURL = 'http://johnvansickle.com/ffmpeg/builds/ffmpeg-git-64bit-static.tar.xz';
 
-gulp.task('postinstall', function(cb) {
-	async.reject(
-		['config.json', 'test_event.json'],
-		fs.exists,
-		function(files) {
-			async.map(files, function(file, cb) {
-				return cb(null, gulp.src(file.replace(/\.json/, '_sample.json'))
-						.pipe(rename(file))
-						.pipe(gulp.dest('.'))
-				);
-			}, cb);
-		}
-	);
-});
-
-gulp.task('download-ffmpeg', function(cb) {
-	if(!fs.existsSync('./build')) {
-		fs.mkdirSync('./build');
+gulp.task('download-ffmpeg', cb => {
+	try {
+		fs.accessSync(buildDir);
+	} catch (e) {
+		fs.mkdirSync(buildDir);
 	}
 
-	var file = fs.createWriteStream(filename);
-	http.get(fileURL, function(response) {
+	const file = fs.createWriteStream(filename);
+
+	http.get(fileURL, response => {
 		response.pipe(file);
 
-		file.on('finish', function() {
+		file.on('finish', () => {
 			file.close();
 			cb();
 		})
@@ -59,146 +39,95 @@ gulp.task('download-ffmpeg', function(cb) {
 // LZMA-native, node-xz, decompress-tarxz. None of them work very well with this.
 // This will probably work well for OS X and Linux, but maybe not Windows without Cygwin.
 gulp.task('untar-ffmpeg', shell.task([
-	'tar -xvf ' + filename + ' -C ./build'
+	`tar -xvf ${filename} -C ./build`
 ]));
 
-gulp.task('copy-ffmpeg', function() {
-	return gulp.src(['build/ffmpeg-*/ffmpeg', 'build/ffmpeg-*/ffprobe'])
-		.pipe(flatten())
-		.pipe(gulp.dest('./dist'));
+gulp.task('copy-ffmpeg', () => {
+	const wd = fs
+		.readdirSync(buildDir)
+		.filter(item => fs
+			.statSync(path.join(buildDir, item))
+			.isDirectory()
+		)[0];
+
+	return gulp
+		.src([
+			'ffmpeg',
+			'ffprobe'
+		], {
+			cwd: path.join(buildDir, wd)
+		})
+		.pipe(gulp.dest('dist'));
 });
 
-/*
- From: https://medium.com/@AdamRNeary/a-gulp-workflow-for-amazon-lambda-61c2afd723b6
- */
-
 // First we need to clean out the dist folder and remove the compiled zip file.
-gulp.task('clean', function() {
-	return del([
+gulp.task('clean', () =>
+	del([
 		'./build/*',
 		'./dist/*',
 		'./dist.zip'
-	]);
-});
-
-// The js task could be replaced with gulp-coffee as desired.
-gulp.task('js', function() {
-	return gulp.src(['index.js', 'config.json'])
-		.pipe(gulp.dest('./dist'))
-});
+	])
+);
 
 // Here we want to install npm packages to dist, ignoring devDependencies.
-gulp.task('npm', function() {
-	return gulp.src('./package.json')
-		.pipe(gulp.dest('./dist'))
-		.pipe(install({production: true}));
-});
+gulp.task('npm', () => gulp
+	.src('./package.json')
+	.pipe(gulp.dest('./dist'))
+	.pipe(install({
+		production: true,
+		ignoreScripts: true
+	}))
+);
 
 // Now the dist directory is ready to go. Zip it.
-gulp.task('zip', function() {
-	return gulp.src(['dist/**/*', '!dist/package.json', 'dist/.*'])
-		.pipe(zip('dist.zip'))
-		.pipe(gulp.dest('./'));
-});
+gulp.task('zip', () => gulp
+	.src([
+		'dist/**/*',
+		'!dist/package.json',
+		'!**/LICENSE',
+		'!**/*.md',
+		'dist/.*'
+	])
+	.pipe(chmod(555))
+	.pipe(zip('dist.zip'))
+	.pipe(gulp.dest('./'))
+);
 
-var cloudFormation = new AWS.CloudFormation();
-var packageInfo = require('./package.json');
-var bucket = config.functionBucket;
-var functionName = packageInfo.name;
-var key = functionName + '.zip';
+const baseDir = 'platform';
 
-// Upload the function code to S3
-gulp.task('upload', function(cb) {
-	s3.upload({
-		Bucket: bucket,
-		Key: key,
-		Body: fs.createReadStream('./dist.zip')
-	}, cb);
-});
+fs.readdirSync(baseDir)
+	.filter(item => fs
+		.statSync(path.join(baseDir, item))
+		.isDirectory()
+	)
+	.forEach(platform => {
+		gulp.task(`${platform}:transpile`, () => gulp
+			.src([
+				'common.js',
+				`${platform}/index.js`,
+				`${platform}/lib.js`
+			], {
+				base: baseDir,
+				cwd: baseDir
+			})
+			.pipe(babel({
+				presets: [
+					// TODO remove this when GCF updates to Node v4
+					platform === 'gcp' ? 'es2015' : 'es2015-node4'
+				]
+			}))
+			.pipe(gulp.dest('dist'))
+		);
 
-var stackName = packageInfo.name;
+		gulp.task(`${platform}:config`, () => gulp
+			.src(`config/${platform}.json`)
+			.pipe(gulp.dest('dist'))
+		);
+		
+		gulp.task(`${platform}:source`, [
+			`${platform}:transpile`,
+			`${platform}:config`
+		]);
 
-// Deploy the CloudFormation Stack
-gulp.task('deployStack', function(cb) {
-	cloudFormation.describeStacks({
-		StackName: stackName
-	}, function(err) {
-		var operation = err ? 'createStack' : 'updateStack';
-
-		cloudFormation[operation]({
-			StackName: stackName,
-			Capabilities: [
-				'CAPABILITY_IAM'
-			],
-			Parameters: [
-				{
-					ParameterKey: 'SourceBucketName',
-					ParameterValue: config.sourceBucket
-				},
-				{
-					ParameterKey: 'DestinationBucketName',
-					ParameterValue: config.destinationBucket
-				},
-				{
-					ParameterKey: 'LambdaS3Bucket',
-					ParameterValue: bucket
-				},
-				{
-					ParameterKey: 'LambdaS3Key',
-					ParameterValue: key
-				}
-			],
-			TemplateBody: fs.readFileSync('./cloudformation.json', {encoding: 'utf8'})
-		}, cb);
+		require(path.join(__dirname, baseDir, platform, 'gulpfile.js'))(gulp, platform);
 	});
-});
-
-// Once the stack is deployed, this will update the function if the code is changed without recreating the stack
-gulp.task('updateCode', function(cb) {
-	async.waterfall([
-		function(cb) {
-			cloudFormation.describeStackResource({
-				StackName: stackName,
-				LogicalResourceId: 'Lambda'
-			}, cb);
-		},
-		function(data, cb) {
-			lambda.updateFunctionCode({
-				FunctionName: data.StackResourceDetail.PhysicalResourceId,
-				S3Bucket: bucket,
-				S3Key: key
-			}, cb);
-		}
-	], cb);
-});
-
-// Builds the function and uploads
-gulp.task('build-upload', function(cb) {
-	return runSequence(
-		'clean',
-		'download-ffmpeg',
-		'untar-ffmpeg',
-		['copy-ffmpeg', 'js', 'npm'],
-		'zip',
-		'upload',
-		cb
-	);
-});
-
-// For an already created stack
-gulp.task('update', function(cb) {
-	return runSequence(
-		'build-upload',
-		'updateCode',
-		cb
-	);
-});
-
-// For a new stack (or you change cloudformation.json)
-gulp.task('default', function(cb) {
-	return runSequence(
-		'build-upload',
-		'deployStack',
-		cb
-	);
-});
