@@ -73,7 +73,10 @@ gulp.task('clean', () =>
 gulp.task('npm', () => gulp
 	.src('./package.json')
 	.pipe(gulp.dest('./dist'))
-	.pipe(install({production: true}))
+	.pipe(install({
+		production: true,
+		ignoreScripts: true
+	}))
 );
 
 // Now the dist directory is ready to go. Zip it.
