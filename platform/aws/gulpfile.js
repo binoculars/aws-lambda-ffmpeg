@@ -28,7 +28,7 @@ module.exports = function(gulp, prefix) {
 			Key: key,
 			Body: fs.createReadStream('dist.zip')
 		})
-		.promise()
+		.on('finish', Promise.resolve)
 	);
 
 	const stackName = packageInfo.name;
