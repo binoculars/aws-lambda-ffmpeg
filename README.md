@@ -107,9 +107,9 @@ Note: you must have the gcloud CLI tool installed.
 ### Example local testing script
 ```bash
 # Environment variables
-GCLOUD_PROJECT=example-project-name
-GOOGLE_APPLICATION_CREDENTIALS=/path/to/credentials.json
-CONFIG_FILE=../../config/gcp.json
+export GCLOUD_PROJECT=example-project-name
+export GOOGLE_APPLICATION_CREDENTIALS=/path/to/credentials.json
+export CONFIG_FILE=../../config/gcp.json
 # Node version
 nvm use 0.12.7 # This is subject to change
 # Babel-node test script
@@ -125,8 +125,8 @@ See [Azure functions reference](https://azure.microsoft.com/en-us/documentation/
 ### Example local testing script
 ```bash
 # Environment variables
-AZURE_STORAGE_CONNECTION_STRING=... # copy from azure console
-CONFIG_FILE=../../config/msa.json
+export AZURE_STORAGE_CONNECTION_STRING=... # copy from azure console
+export CONFIG_FILE=../../config/msa.json
 # Node version
 nvm use 5.9.1 # This is subject to change
 # Babel-node test script
