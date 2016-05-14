@@ -6,7 +6,7 @@ var packageInfo = require('../../package.json');
 
 var config;
 try {
-	config = require(path.join(__dirname, 'config.json'));
+	config = require('../../config/gcp.json');
 } catch (ex) {
 	config = {};
 }
