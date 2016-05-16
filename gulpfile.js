@@ -121,6 +121,7 @@ fs.readdirSync(baseDir)
 
 		gulp.task(`${platform}:config`, () => gulp
 			.src(`config/${platform}.json`)
+			.pipe(rename('config.json'))
 			.pipe(gulp.dest('dist'))
 		);
 		
