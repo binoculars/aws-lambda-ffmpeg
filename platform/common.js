@@ -10,6 +10,7 @@ import {tmpdir} from 'os';
 
 /** @type string **/
 const tempDir = process.env['TEMP'] || tmpdir();
+const config = require(process.env.CONFIG_FILE || './config.json');
 
 /**
  * Downloads the file to the local temp directory
@@ -37,11 +38,10 @@ function downloadFile(downloadFunc, logger, sourceLocation, download) {
 /**
  * Runs FFprobe and ensures that the input file has a valid stream and meets the maximum duration threshold.
  *
- * @param {Object} config - The configuration
  * @param {!{log: !function}} logger - The platform logger
  * @returns {Promise}
  */
-function ffprobe(config, logger) {
+function ffprobe(logger) {
 	logger.log('Starting FFprobe');
 
 	return new Promise((resolve, reject) => {
@@ -85,12 +85,11 @@ function ffprobe(config, logger) {
 /**
  * Runs the FFmpeg executable
  *
- * @param {object} config - The configuration
  * @param {!{log: !function}} logger - The platform logger
  * @param {string} keyPrefix - The prefix for the key (filename minus extension)
  * @returns {Promise}
  */
-function ffmpeg(config, logger, keyPrefix) {
+function ffmpeg(logger, keyPrefix) {
 	logger.log('Starting FFmpeg');
 
 	const description = `${config.linkPrefix}/${keyPrefix}.${config.format.video.extension}`;
@@ -203,13 +202,12 @@ function removeFiles(logger, filename, rmFiles) {
  * Transforms, uploads, and deletes an output file
  *
  * @param {!function} uploadFunc - The function to upload a processed file
- * @param {object} config - The configuration
  * @param {!{log: !function}} logger - The platform logger
  * @param {!string} keyPrefix - The prefix for the key (filename minus extension)
  * @param {!string} type - The output file type, as specified in the configuration
  * @returns {Promise}
  */
-function uploadFile(uploadFunc, config, logger, keyPrefix, type) {
+function uploadFile(uploadFunc, logger, keyPrefix, type) {
 	const format = config.format[type];
 	const filename = join(tempDir, `out.${format.extension}`);
 	const rmFiles = [filename];
@@ -231,15 +229,15 @@ function uploadFile(uploadFunc, config, logger, keyPrefix, type) {
  * Uploads the output files
  *
  * @param {!function} uploadFunc - The function to upload a processed file
- * @param {object} config - The configuration
  * @param {!{log: !function}} logger - The platform logger
  * @param {!string} keyPrefix - The prefix for the key (filename minus extension)
  * @returns {Promise}
  */
-function uploadFiles(uploadFunc, config, logger, keyPrefix) {
+function uploadFiles(uploadFunc, logger, keyPrefix) {
 	return Promise
-		.all(Object.keys(config.format)
-			.map(type => uploadFile(uploadFunc, config, logger, keyPrefix, type))
+		.all(Object
+			.keys(config.format)
+			.map(type => uploadFile(uploadFunc, logger, keyPrefix, type))
 		);
 }
 
@@ -251,23 +249,22 @@ function uploadFiles(uploadFunc, config, logger, keyPrefix) {
  *     getFileLocation: !function,
  *     uploadToBucket: !function
  * }} library - The platform library
- * @param {object} config - The configuration
  * @param {!{log: !function}} logger - The platform logger
  * @param {!{
  *     event: !object,
  *     callback: !function
  * }} invocation - The invocation
  */
-export function main(library, config, logger, invocation) {
+export function main(library, logger, invocation) {
 	const sourceLocation = library.getFileLocation(invocation.event);
 	const keyPrefix = sourceLocation.key.replace(/\.[^/.]+$/, '');
 	const localFilePath = join(tempDir, 'download');
 
 	downloadFile(library.getDownloadStream, logger, sourceLocation, localFilePath)
-		.then(() => ffprobe(config, logger))
-		.then(() => ffmpeg(config, logger, keyPrefix))
+		.then(() => ffprobe(logger))
+		.then(() => ffmpeg(logger, keyPrefix))
 		.then(() => removeDownload(logger, localFilePath))
-		.then(() => uploadFiles(library.uploadToBucket, config, logger, keyPrefix))
+		.then(() => uploadFiles(library.uploadToBucket, logger, keyPrefix))
 		.then(data => invocation.callback())
 		.catch(error => invocation.callback(error));
 };

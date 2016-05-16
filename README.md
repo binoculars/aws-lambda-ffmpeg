@@ -64,7 +64,7 @@ At minimum, you need to modify:
 export AWS_ACCESS_KEY_ID=AKIDEXAMPLE
 export AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY
 export AWS_REGION=us-east-1
-export CONFIG_FILE=../../config/aws.json
+export CONFIG_FILE=../config/aws.json
 # Node version
 nvm use 4.3.2 # This is subject to change
 # Babel-node test script
@@ -109,7 +109,7 @@ Note: you must have the gcloud CLI tool installed.
 # Environment variables
 export GCLOUD_PROJECT=example-project-name
 export GOOGLE_APPLICATION_CREDENTIALS=/path/to/credentials.json
-export CONFIG_FILE=../../config/gcp.json
+export CONFIG_FILE=../config/gcp.json
 # Node version
 nvm use 0.12.7 # This is subject to change
 # Babel-node test script
@@ -126,7 +126,7 @@ See [Azure functions reference](https://azure.microsoft.com/en-us/documentation/
 ```bash
 # Environment variables
 export AZURE_STORAGE_CONNECTION_STRING=... # copy from azure console
-export CONFIG_FILE=../../config/msa.json
+export CONFIG_FILE=../config/msa.json
 # Node version
 nvm use 5.9.1 # This is subject to change
 # Babel-node test script
