@@ -22,13 +22,14 @@ const key = `${packageInfo.name}.zip`;
 
 module.exports = function(gulp, prefix) {
 	// Upload the function code to S3
-	gulp.task(`${prefix}:upload`, () => s3
+	gulp.task(`${prefix}:upload`, cb => s3
 		.upload({
 			Bucket: bucket,
 			Key: key,
 			Body: fs.createReadStream('dist.zip')
 		})
 		.on('finish', Promise.resolve)
+		.send(cb)
 	);
 
 	const stackName = packageInfo.name;
