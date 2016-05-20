@@ -95,7 +95,7 @@ Everything you need to get started
 Run after modifying anything in the function or configuration, if you've already created the stack. This will rebuild `dist.zip`, upload it to S3, and update the lambda function created during the CloudFormation stack creation.
 
 ## Google Cloud Functions
-See the (quickstart guide](https://cloud.google.com/functions/quickstart).
+See the [quickstart guide](https://cloud.google.com/functions/quickstart).
 
 ### Gulp
 Note: you must have the gcloud CLI tool installed.
