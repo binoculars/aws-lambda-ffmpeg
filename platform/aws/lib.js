@@ -67,15 +67,11 @@ export function uploadToBucket(bucket, key, fileStream, contentEncoding, content
 
 	if (contentEncoding)
 		params.ContentEncoding = contentEncoding;
-	
-	return new Promise((resolve, reject) => {
-		s3.upload(params)
-			.on('httpUploadProgress', function (evt) {
-				console.log(contentType, 'Progress:', evt.loaded, '/', evt.total, Math.round(100 * evt.loaded / evt.total) + '%');
-			})
-			.send((error, data) => {
-				if (error) reject(error);
-				else resolve(data);
-			});
-	});
+
+	return s3
+		.putObject(params)
+		.on('httpUploadProgress', evt => {
+			console.log(contentType, 'Progress:', evt.loaded, '/', evt.total, Math.round(100 * evt.loaded / evt.total) + '%');
+		})
+		.promise();
 }
