@@ -55,6 +55,7 @@ export function getFileLocation(event) {
  * @param {!module:fs~ReadStream} fileStream - The file stream to upload
  * @param {string} contentEncoding - The Content-Encoding of the file (gzip or none)
  * @param {!string} contentType - The Content-Type of the file (e.g. video/mp4)
+ * @returns Promise
  */
 export function uploadToBucket(bucket, key, fileStream, contentEncoding, contentType) {
 	const params = {
