@@ -23,19 +23,14 @@ export function getDownloadStream(bucket, key) {
 
 /**
  * Normalizes the location of a cloud storage object for S3
- * 
- * @param {!{
- *     Records: [{
- *         s3: {
- *             bucket: {
- *                 name: !string
- *             },
- *             object: {
- *                 key: !string
- *             }
- *         }
- *     }]
- * }} event - The S3 Event
+ *
+ * @param {!Object} event - The S3 Event
+ * @param {!Object[]} event.Records
+ * @param {!Object} event.Records[].s3
+ * @param {!Object} event.Records[].s3.bucket
+ * @param {!string} event.Records[].s3.bucket.name
+ * @param {!Object} event.Records[].s3.object
+ * @param {!string} event.Records[].s3.object.key
  * @returns {{bucket: string, key: string}}
  */
 export function getFileLocation(event) {
