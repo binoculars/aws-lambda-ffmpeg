@@ -1,6 +1,6 @@
 'use strict';
 
-const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const gulp = require('gulp');
@@ -14,7 +14,7 @@ const babel = require('gulp-babel');
 
 const buildDir = 'build';
 const filename = path.join(buildDir, 'ffmpeg-git-64bit-static.tar.xz');
-const fileURL = 'http://johnvansickle.com/ffmpeg/builds/ffmpeg-git-64bit-static.tar.xz';
+const fileURL = 'https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-64bit-static.tar.xz';
 
 gulp.task('download-ffmpeg', cb => {
 	try {
@@ -25,7 +25,7 @@ gulp.task('download-ffmpeg', cb => {
 
 	const file = fs.createWriteStream(filename);
 
-	http.get(fileURL, response => {
+	https.get(fileURL, response => {
 		response.pipe(file);
 
 		file.on('finish', () => {
