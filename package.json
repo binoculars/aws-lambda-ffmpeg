@@ -20,7 +20,7 @@
   "author": "Barrett Harber",
   "license": "Unlicense",
   "devDependencies": {
-    "aws-sdk": "2.4.2",
+    "ava": "^0.17.0",
     "aws-sdk-on-lambda": "github:binoculars/aws-sdk-js-on-lambda",
     "azure-storage": "^0.10.0",
     "babel": "^6.5.2",
@@ -45,6 +45,11 @@
   "babel": {
     "presets": [
       "es2015-node4"
+    ]
+  },
+  "ava": {
+    "require": [
+      "babel-register"
     ]
   }
 }

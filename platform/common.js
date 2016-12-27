@@ -7,6 +7,7 @@ import {unlinkSync, createReadStream, createWriteStream, readdirSync} from 'fs';
 import {createGzip, Z_BEST_COMPRESSION} from 'zlib';
 import {join} from 'path';
 import {tmpdir} from 'os';
+import {checkM3u} from './lib';
 
 /** @type string **/
 const tempDir = process.env['TEMP'] || tmpdir();
@@ -278,6 +279,7 @@ export function main(library, logger, invocation) {
 	const localFilePath = join(tempDir, 'download');
 
 	downloadFile(library.getDownloadStream, logger, sourceLocation, localFilePath)
+		.then(() => checkM3u(localFilePath))
 		.then(() => ffprobe(logger))
 		.then(() => ffmpeg(logger, keyPrefix))
 		.then(() => removeDownload(logger, localFilePath))
