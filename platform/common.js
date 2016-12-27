@@ -3,7 +3,7 @@
 process.env['NODE_ENV'] = 'production';
 
 import {spawn, execFile} from 'child_process';
-import {unlinkSync, createReadStream, createWriteStream} from 'fs';
+import {unlinkSync, createReadStream, createWriteStream, readdirSync} from 'fs';
 import {createGzip, Z_BEST_COMPRESSION} from 'zlib';
 import {join} from 'path';
 import {tmpdir} from 'os';
@@ -12,11 +12,26 @@ import {tmpdir} from 'os';
 const tempDir = process.env['TEMP'] || tmpdir();
 const config = require(process.env.CONFIG_FILE || './config.json');
 
+const outputDir = join(tempDir, 'outputs');
+const maxDuration = config.videoMaxDuration;
+
+const mimeTypes = {
+	'png': 'image/png',
+	'mp4': 'video/mp4'
+};
+
+const extensionRegex = /\.(\w+)$/;
+
+function getMimeType(filename) {
+	return filename.match(extensionRegex)[1];
+}
+
 /**
  * Downloads the file to the local temp directory
  *
  * @param {!function} downloadFunc - The platform library's download function
- * @param {!{log: !function}} logger - The platform logger
+ * @param {!Object} logger - The platform logger
+ * @param {!function} logger.log - The logging function
  * @param {{bucket: !string, key: !string}} sourceLocation - The location of the remote file
  * @param {!string} download - The location of the local file
  * @returns {Promise}
@@ -38,7 +53,8 @@ function downloadFile(downloadFunc, logger, sourceLocation, download) {
 /**
  * Runs FFprobe and ensures that the input file has a valid stream and meets the maximum duration threshold.
  *
- * @param {!{log: !function}} logger - The platform logger
+ * @param {!Object} logger - The platform logger
+ * @param {!function} logger.log - The logging function
  * @returns {Promise}
  */
 function ffprobe(logger) {
@@ -62,7 +78,6 @@ function ffprobe(logger) {
 			logger.log(stdout);
 
 			const outputObj = JSON.parse(stdout);
-			const maxDuration = config.videoMaxDuration;
 
 			const hasVideoStream = outputObj.streams.some(stream =>
 				stream.codec_type === 'video' &&
@@ -234,6 +249,8 @@ function uploadFile(uploadFunc, logger, keyPrefix, type) {
  * @returns {Promise}
  */
 function uploadFiles(uploadFunc, logger, keyPrefix) {
+	const files = readdirSync(outputDir)
+
 	return Promise
 		.all(Object
 			.keys(config.format)

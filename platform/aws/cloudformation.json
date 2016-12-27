@@ -121,6 +121,13 @@
 						"Arn"
 					]
 				},
+				"Environment": {
+					"Variables": {
+						"destinationBucket": {
+							"Ref": "DestinationBucketName"
+						}
+					}
+				},
 				"Timeout": 30,
 				"Handler": "aws/index.handler",
 				"Runtime": "nodejs4.3",
