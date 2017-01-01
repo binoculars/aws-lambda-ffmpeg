@@ -2,6 +2,7 @@
 
 [![Dependency Status](https://david-dm.org/binoculars/aws-lambda-ffmpeg.svg)](https://david-dm.org/binoculars/aws-lambda-ffmpeg)
 [![devDependency Status](https://david-dm.org/binoculars/aws-lambda-ffmpeg/dev-status.svg)](https://david-dm.org/binoculars/aws-lambda-ffmpeg#info=devDependencies)
+[![Known Vulnerabilities](https://snyk.io/test/github/binoculars/aws-lambda-ffmpeg/badge.svg)](https://snyk.io/test/github/binoculars/aws-lambda-ffmpeg)
 
 The different platforms have different naming conventions for their services. To simplify this, listed below is a *proposed* table of generalized terms that are platform-independent.
 
