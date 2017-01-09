@@ -132,6 +132,7 @@ fs.readdirSync(baseDir)
 		gulp.task(`${platform}:transpile`, () => gulp
 			.src([
 				'common.js',
+				'lib.js',
 				`${platform}/index.js`,
 				`${platform}/lib.js`
 			], {
