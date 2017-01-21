@@ -1,5 +1,6 @@
 'use strict';
 
+const parse = require('url').parse;
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
@@ -13,8 +14,37 @@ const zip = require('gulp-zip');
 const babel = require('gulp-babel');
 
 const buildDir = 'build';
-const filename = path.join(buildDir, 'ffmpeg-git-64bit-static.tar.xz');
-const fileURL = 'https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-64bit-static.tar.xz';
+const filename = path.join(buildDir, 'ffmpeg-build-lambda.tar.gz');
+const releaseUrl = 'https://api.github.com/repos/binoculars/ffmpeg-build-lambda/releases/latest';
+
+function request(url, toPipe) {
+	const options = parse(url);
+	options.headers = {
+		'User-Agent': 'node'
+	};
+
+	return new Promise((resolve, reject) => {
+		const req = https.get(options, response => {
+			if (response.statusCode < 200 || response.statusCode > 299) {
+				if (response.statusCode === 302)
+					return request(response.headers.location, toPipe);
+
+				return reject(new Error('Failed to load page, status code: ' + response.statusCode));
+			}
+
+			let body = '';
+
+			if (toPipe)
+				response.pipe(toPipe);
+			else
+				response.on('data', chunk => body += chunk);
+
+			response.on('end', () => resolve(body));
+		});
+
+		req.on('error', reject);
+	});
+}
 
 gulp.task('download-ffmpeg', cb => {
 	try {
@@ -25,21 +55,23 @@ gulp.task('download-ffmpeg', cb => {
 
 	const file = fs.createWriteStream(filename);
 
-	https.get(fileURL, response => {
-		response.pipe(file);
-
-		file.on('finish', () => {
-			file.close();
-			cb();
-		})
+	file.on('finish', () => {
+		file.close();
+		cb();
 	});
+
+	request(releaseUrl)
+		.then(JSON.parse)
+		.then(result => {
+			const fileUrl = result.assets[0].browser_download_url;
+
+			return request(fileUrl, file);
+		});
 });
 
-// Resorting to using a shell task. Tried a number of other things including
-// LZMA-native, node-xz, decompress-tarxz. None of them work very well with this.
 // This will probably work well for OS X and Linux, but maybe not Windows without Cygwin.
 gulp.task('untar-ffmpeg', shell.task([
-	`tar -xvf ${filename} -C ./build`
+	`mkdir -p ./build/ffmpeg && tar -zxvf ${filename} -C ./build/ffmpeg`
 ]));
 
 gulp.task('copy-ffmpeg', () => {
