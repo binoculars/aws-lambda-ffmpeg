@@ -46,7 +46,7 @@ function request(url, toPipe) {
 	});
 }
 
-gulp.task('download-ffmpeg', () => {
+gulp.task('download-ffmpeg', cb => {
 	try {
 		fs.accessSync(buildDir);
 	} catch (e) {
@@ -55,14 +55,18 @@ gulp.task('download-ffmpeg', () => {
 
 	const file = fs.createWriteStream(filename);
 
-	return request(releaseUrl)
+	file.on('finish', () => {
+		file.close();
+		cb();
+	});
+
+	request(releaseUrl)
 		.then(JSON.parse)
 		.then(result => {
 			const fileUrl = result.assets[0].browser_download_url;
 
 			return request(fileUrl, file);
-		})
-		.then(() => file.close());
+		});
 });
 
 // This will probably work well for OS X and Linux, but maybe not Windows without Cygwin.
