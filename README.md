@@ -81,16 +81,16 @@ Everything you need to get started
 
 #### Task: `aws:build-upload`
 - Builds `dist.zip`
- - Downloads and extracts FFmpeg binaries
- - Transpiles, installs dependencies, and copies configuration
+  - Downloads and extracts FFmpeg binaries
+  - Transpiles, installs dependencies, and copies configuration
 - Uploads `dist.zip` to the function's S3 bucket
 
 #### Task: `aws:deployStack`
 - Creates or updates the CloudFormation stack which includes:
- - The lambda function's execution role and policy
- - The lambda function
- - The source bucket (where videos are uploaded to), including the notification configuration
- - The destination bucket (where videos and thumbnails go after they are processed)
+  - The lambda function's execution role and policy
+  - The lambda function
+  - The source bucket (where videos are uploaded to), including the notification configuration
+  - The destination bucket (where videos and thumbnails go after they are processed)
 
 #### Task: `aws:update`
 Run after modifying anything in the function or configuration, if you've already created the stack. This will rebuild `dist.zip`, upload it to S3, and update the lambda function created during the CloudFormation stack creation.
