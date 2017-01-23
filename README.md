@@ -4,6 +4,9 @@
 [![devDependency Status](https://david-dm.org/binoculars/aws-lambda-ffmpeg/dev-status.svg)](https://david-dm.org/binoculars/aws-lambda-ffmpeg#info=devDependencies)
 [![Known Vulnerabilities](https://snyk.io/test/github/binoculars/aws-lambda-ffmpeg/badge.svg)](https://snyk.io/test/github/binoculars/aws-lambda-ffmpeg)
 
+- Master: [![Build Status](https://travis-ci.org/binoculars/aws-lambda-ffmpeg.svg?branch=master)](https://travis-ci.org/binoculars/aws-lambda-ffmpeg)
+- Develop: [![Build Status](https://travis-ci.org/binoculars/aws-lambda-ffmpeg.svg?branch=develop)](https://travis-ci.org/binoculars/aws-lambda-ffmpeg)
+
 The different platforms have different naming conventions for their services. To simplify this, listed below is a *proposed* table of generalized terms that are platform-independent.
 
 | Term | Amazon Web Services | Microsoft Azure | Google Cloud Platform |
@@ -44,6 +47,11 @@ At minimum, you need to modify:
 - `destinationBucket` - The name of the bucket that will be used to store the output video and thumbnail image.
 
 ## Local Testing
+
+### Unit Tests
+- Run `npm test`
+
+### Integration Tests
 - [Install FFmpeg locally](https://ffmpeg.org/download.html) or use the [compilation guide](https://trac.ffmpeg.org/wiki/CompilationGuide)
 - Edit `event/{platform}.json` and run `node test/{platform}.js`, where platform is (aws|msa|gcp)
 - When switching among the platforms, reinstall the node modules if the runtime supports a different version of Node.js.

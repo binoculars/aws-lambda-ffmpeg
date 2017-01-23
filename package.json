@@ -5,7 +5,8 @@
   "description": "AWS Lambda function to resize video and generate a thumbnail",
   "engineStrict": true,
   "engines": {
-    "node": ">=4.3"
+    "node": ">=4.3",
+    "npm": ">=3"
   },
   "main": "index.js",
   "scripts": {
