@@ -1,10 +1,12 @@
-var path = require('path');
-var runSequence = require('run-sequence');
-var jeditor = require("gulp-json-editor");
-var child_process = require('child_process');
-var packageInfo = require('../../package.json');
+'use strict';
 
-var config;
+const path = require('path');
+const runSequence = require('run-sequence');
+const jeditor = require("gulp-json-editor");
+const child_process = require('child_process');
+const packageInfo = require('../../package.json');
+
+let config;
 try {
 	config = require('../../config/gcp.json');
 } catch (ex) {
@@ -16,7 +18,7 @@ module.exports = function(gulp, prefix) {
 		return gulp.src('./package.json')
 			.pipe(jeditor(function(json) {
 				json.main = './gcp/index.js';
-				json.dependencies.gcloud = packageInfo.devDependencies.gcloud;
+				json.dependencies['google-cloud'] = packageInfo.devDependencies['google-cloud'];
 				delete json.scripts;
 				delete json.devDependencies;
 				return json;

@@ -17,6 +17,8 @@ const buildDir = 'build';
 const filename = path.join(buildDir, 'ffmpeg-build-lambda.tar.gz');
 const releaseUrl = 'https://api.github.com/repos/binoculars/ffmpeg-build-lambda/releases/latest';
 
+const packageJson = require('./package.json');
+
 function request(url, toPipe) {
 	const options = parse(url);
 	options.headers = {
@@ -145,9 +147,19 @@ fs.readdirSync(baseDir)
 			})
 			.pipe(babel({
 				presets: [
-					// TODO remove this when GCF updates to Node v4
-					platform === 'gcp' ? 'es2015' : 'es2015-node4'
-				]
+					[
+						'env',
+						{
+							targets: {
+								node: platform === 'aws' ? 4.3 : 6.9
+							},
+							exclude: packageJson.babel.presets[0][1].exclude
+						}
+					]
+				],
+				env: 'production',
+				comments: false,
+				compact: true
 			}))
 			.pipe(gulp.dest('dist'))
 		);

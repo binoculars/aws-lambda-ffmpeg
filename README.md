@@ -112,7 +112,7 @@ export GCLOUD_PROJECT=example-project-name
 export GOOGLE_APPLICATION_CREDENTIALS=/path/to/credentials.json
 export CONFIG_FILE=../config/gcp.json
 # Node version
-nvm use 0.12.7 # This is subject to change
+nvm use 6.9.1 # This is subject to change
 # Babel-node test script
 node node_modules/babel-cli/bin/babel-node.js --presets es2015 test/gcp.js
 ```
