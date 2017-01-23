@@ -8,3 +8,6 @@ cache:
   directories:
   - node_modules
   - $HOME/.cache
+
+before_install:
+- npm i -g npm@latest
