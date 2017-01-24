@@ -77,13 +77,14 @@ export CONFIG_FILE=../config/aws.json
 # Node version
 nvm use 4.3.2 # This is subject to change
 # Babel-node test script
-node node_modules/babel-cli/bin/babel-node.js --presets es2015-node4 test/aws.js
+node node_modules/babel-cli/bin/babel-node.js test/aws.js
 ```
 
 ### Gulp
+Be sure to create your functionBucket first (e.g. `aws s3 mb s3://function-bucket` or in the console)
 
 #### Task: `aws:default`
-Everything you need to get started
+Everything you need to get started. Note: You can change the stack name by setting environment variable `STACK_NAME`.
 - Runs the `aws:build-upload` task
 - Runs the `aws:deployStack` task
 
