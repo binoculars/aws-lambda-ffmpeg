@@ -32,7 +32,7 @@ module.exports = function(gulp, prefix) {
 		.send(cb)
 	);
 
-	const stackName = packageInfo.name;
+	const stackName = process.env.STACK_NAME || packageInfo.name;
 
 	// Deploy the CloudFormation Stack
 	gulp.task(`${prefix}:deployStack`, cb => {
