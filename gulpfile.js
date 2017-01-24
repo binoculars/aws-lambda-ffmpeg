@@ -122,7 +122,7 @@ gulp.task('zip', () => gulp
 		'!**/*.md',
 		'dist/.*'
 	])
-	.pipe(chmod(555))
+	.pipe(chmod(0o555))
 	.pipe(zip('dist.zip'))
 	.pipe(gulp.dest('./'))
 );
