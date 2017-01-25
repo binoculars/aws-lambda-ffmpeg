@@ -27,7 +27,7 @@
   "devDependencies": {
     "ava": "^0.17.0",
     "aws-sdk-on-lambda": "*",
-    "azure-storage": "^1.4.0",
+    "azure-storage": "^2.0.0",
     "babel-cli": "^6.22.2",
     "babel-preset-env": "^1.1.8",
     "del": "^2.2.0",
