@@ -1,0 +1,375 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "Bootstrap template for creating a continuous integration user and permissions",
+	"Parameters": {
+		"StackPrefix": {
+			"Type" : "String",
+			"Default" : "aws-lambda-ffmpeg",
+			"AllowedPattern" : "^[A-Za-z0-9\\-]+$",
+			"MaxLength": "20",
+			"MinLength": "3",
+			"ConstraintDescription": "must contain only alphanumeric characters (case sensitive) and hyphens",
+			"Description" : "The prefix for the stack names for CI, will be combined with branch name"
+		}
+	},
+	"Resources": {
+		"Bucket": {
+			"Type": "AWS::S3::Bucket"
+		},
+		"ServiceRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": "cloudformation.amazonaws.com"
+							},
+							"Action": "sts:AssumeRole"
+						}
+					]
+				},
+				"Path": "/ci/",
+				"RoleName": {
+					"Ref": "StackPrefix"
+				}
+			}
+		},
+		"ModulePolicy": {
+			"Type": "AWS::IAM::ManagedPolicy",
+			"Properties": {
+				"Description": "ExecutionRolePolicy",
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": [
+								"logs:CreateLogGroup",
+								"logs:CreateLogStream",
+								"logs:PutLogEvents"
+							],
+							"Resource": "arn:aws:logs:*:*:*"
+						},
+						{
+							"Effect": "Allow",
+							"Action": "s3:GetObject",
+							"Resource": {
+								"Fn::Join": [
+									"",
+									[
+										"arn:aws:s3:::",
+										{
+											"Ref": "StackPrefix"
+										},
+										"*-src/*"
+									]
+								]
+							}
+						},
+						{
+							"Effect": "Allow",
+							"Action": "s3:PutObject",
+							"Resource": {
+								"Fn::Join": [
+									"",
+									[
+										"arn:aws:s3:::",
+										{
+											"Ref": "StackPrefix"
+										},
+										"*-dst/*"
+									]
+								]
+							}
+						}
+					]
+				}
+			}
+		},
+		"ServiceRolePolicy": {
+			"Type": "AWS::IAM::Policy",
+			"DependsOn": [
+				"Bucket",
+				"ServiceRole",
+				"ModulePolicy"
+			],
+			"Properties": {
+				"PolicyName": "root",
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": [
+								"s3:CreateBucket",
+								"s3:DeleteBucket",
+								"s3:PutBucketNotification"
+							],
+							"Resource": {
+								"Fn::Join": [
+									"",
+									[
+										"arn:aws:s3:::",
+										{
+											"Ref": "StackPrefix"
+										},
+										"-*"
+									]
+								]
+							}
+						},
+						{
+							"Effect": "Allow",
+							"Action": "s3:GetObject",
+							"Resource": {
+								"Fn::Join": [
+									"",
+									[
+										"arn:aws:s3:::",
+										{
+											"Ref": "Bucket"
+										},
+										"/*.zip"
+									]
+								]
+							}
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"iam:AttachRolePolicy",
+								"iam:CreateRole",
+								"iam:DeleteRole",
+								"iam:DetachRolePolicy",
+								"iam:GetRole",
+								"iam:PassRole"
+							],
+							"Resource": {
+								"Fn::Join": [
+									"",
+									[
+										"arn:aws:iam::",
+										{
+											"Ref": "AWS::AccountId"
+										},
+										":role/",
+										{
+											"Ref": "StackPrefix"
+										},
+										"/*"
+									]
+								]
+							}
+						},
+						{
+							"Effect": "Allow",
+							"Action": "iam:AttachRolePolicy",
+							"Resource": {
+								"Ref": "ModulePolicy"
+							}
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"lambda:AddPermission",
+								"lambda:RemovePermission"
+							],
+							"Resource": "*"
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"lambda:AddPermission",
+								"lambda:CreateFunction",
+								"lambda:DeleteFunction",
+								"lambda:GetFunctionConfiguration",
+								"lambda:RemovePermission",
+								"lambda:UpdateFunctionCode",
+								"lambda:UpdateFunctionConfiguration"
+							],
+							"Resource": {
+								"Fn::Join": [
+									"",
+									[
+										"arn:aws:lambda:",
+										{
+											"Ref": "AWS::Region"
+										},
+										":",
+										{
+											"Ref": "AWS::AccountId"
+										},
+										":function:",
+										{
+											"Ref": "StackPrefix"
+										},
+										"*"
+									]
+								]
+							}
+						}
+					]
+				},
+				"Roles": [
+					{
+						"Ref": "ServiceRole"
+					}
+				]
+			}
+		},
+		"CIUser": {
+			"Type": "AWS::IAM::User",
+			"Properties": {
+				"Path": "/ci/"
+			}
+		},
+		"CIUserPolicy": {
+			"Type": "AWS::IAM::Policy",
+			"DependsOn": [
+				"ServiceRole",
+				"CIUser"
+			],
+			"Properties": {
+				"PolicyName": "root",
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": [
+								"iam:GetRole",
+								"iam:PassRole"
+							],
+							"Resource": {
+								"Fn::GetAtt": [
+									"ServiceRole",
+									"Arn"
+								]
+							}
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"s3:DeleteObject",
+								"s3:GetObject",
+								"s3:PutObject"
+							],
+							"Resource": [
+								{
+									"Fn::Join": [
+										"",
+										[
+											"arn:aws:s3:::",
+											{
+												"Ref": "Bucket"
+											},
+											"/tag-*/*"
+										]
+									]
+								},
+								{
+									"Fn::Join": [
+										"",
+										[
+											"arn:aws:s3:::",
+											{
+												"Ref": "Bucket"
+											},
+											"/branch-*/*"
+										]
+									]
+								}
+							]
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"cloudformation:CreateStack",
+								"cloudformation:DescribeStacks",
+								"cloudformation:UpdateStack",
+								"cloudformation:ValidateTemplate"
+							],
+							"Resource": {
+								"Fn::Join": [
+									"",
+									[
+										"arn:aws:cloudformation:",
+										{
+											"Ref": "AWS::Region"
+										},
+										":",
+										{
+											"Ref": "AWS::AccountId"
+										},
+										":stack/",
+										{
+											"Ref": "StackPrefix"
+										},
+										"-*"
+									]
+								]
+							},
+							"Condition": {
+								"StringEquals": {
+									"cloudformation:RoleArn": {
+										"Fn::GetAtt": [
+											"ServiceRole",
+											"Arn"
+										]
+									}
+								}
+							}
+						}
+					]
+				},
+				"Users": [
+					{
+						"Ref": "CIUser"
+					}
+				]
+			}
+		},
+		"CIUserAccessKey": {
+			"Type": "AWS::IAM::AccessKey",
+			"DependsOn": [
+				"CIUser"
+			],
+			"Properties": {
+				"UserName": {
+					"Ref": "CIUser"
+				}
+			}
+		}
+	},
+	"Outputs": {
+		"CIUserAccessKey": {
+			"Value": {
+				"Ref": "CIUserAccessKey"
+			}
+		},
+		"CIUserSecretKey": {
+			"Value": {
+				"Fn::GetAtt": [
+					"CIUserAccessKey",
+					"SecretAccessKey"
+				]
+			}
+		},
+		"Bucket": {
+			"Value": {
+				"Ref": "Bucket"
+			}
+		},
+		"ServiceRoleArn": {
+			"Value": {
+				"Fn::GetAtt": [
+					"ServiceRole",
+					"Arn"
+				]
+			}
+		}
+	}
+}

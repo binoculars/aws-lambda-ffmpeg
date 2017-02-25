@@ -18,6 +18,21 @@
 			"Type": "String",
 			"AllowedPattern": ".*\\.zip",
 			"Description": "The S3 key for the lambda function code"
+		},
+		"ExecutionRoleManagedPolicyArn": {
+			"Type": "String",
+			"Default": "",
+			"Description": "ARN of the external execution role policy"
+		}
+	},
+	"Conditions": {
+		"UseInternalExecutionRolePolicy": {
+			"Fn::Equals": [
+				{
+					"Ref": "ExecutionRoleManagedPolicyArn"
+				},
+				""
+			]
 		}
 	},
 	"Resources": {
@@ -40,65 +55,77 @@
 						}
 					]
 				},
-				"Path": "/",
-				"Policies": [
+				"ManagedPolicyArns": [
 					{
-						"PolicyName": "ExecutionRolePolicy",
-						"PolicyDocument": {
-							"Version": "2012-10-17",
-							"Statement": [
-								{
-									"Effect": "Allow",
-									"Action": [
-										"logs:*"
-									],
-									"Resource": [
-										"arn:aws:logs:*:*:*"
-									]
-								},
-								{
-									"Effect": "Allow",
-									"Action": [
-										"logs:*"
-									],
-									"Resource": "arn:aws:logs:*:*:*"
-								},
-								{
-									"Effect": "Allow",
-									"Action": "s3:GetObject",
-									"Resource": {
-										"Fn::Join": [
-											"",
-											[
-												"arn:aws:s3:::",
-												{
-													"Ref": "SourceBucketName"
-												},
-												"/*"
-											]
-										]
-									}
-								},
-								{
-									"Effect": "Allow",
-									"Action": "s3:PutObject",
-									"Resource": {
-										"Fn::Join": [
-											"",
-											[
-												"arn:aws:s3:::",
-												{
-													"Ref": "DestinationBucketName"
-												},
-												"/*"
-											]
-										]
-									}
-								}
-							]
-						}
+						"Fn::If": [
+							"UseInternalExecutionRolePolicy",
+							{
+								"Ref": "AWS::NoValue"
+							},
+							{
+								"Ref": "ExecutionRoleManagedPolicyArn"
+							}
+						]
 					}
-				]
+				],
+				"Path": "/aws-lambda-ffmpeg/"
+			}
+		},
+		"ExecutionRolePolicy": {
+			"Type": "AWS::IAM::Policy",
+			"DependsOn": "ExecutionRole",
+			"Condition": "UseInternalExecutionRolePolicy",
+			"Properties": {
+				"PolicyName": "ExecutionRolePolicy",
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": [
+								"logs:CreateLogGroup",
+								"logs:CreateLogStream",
+								"logs:PutLogEvents"
+							],
+							"Resource": "arn:aws:logs:*:*:*"
+						},
+						{
+							"Effect": "Allow",
+							"Action": "s3:GetObject",
+							"Resource": {
+								"Fn::Join": [
+									"",
+									[
+										"arn:aws:s3:::",
+										{
+											"Ref": "SourceBucketName"
+										},
+										"/*"
+									]
+								]
+							}
+						},
+						{
+							"Effect": "Allow",
+							"Action": "s3:PutObject",
+							"Resource": {
+								"Fn::Join": [
+									"",
+									[
+										"arn:aws:s3:::",
+										{
+											"Ref": "DestinationBucketName"
+										},
+										"/*"
+									]
+								]
+							}
+						}
+					]
+				},
+				"Roles": {
+					"Ref": "ExecutionRole"
+				}
 			}
 		},
 		"Lambda": {

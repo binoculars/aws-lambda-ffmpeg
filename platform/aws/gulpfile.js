@@ -17,75 +17,111 @@ try {
 	config = {};
 }
 
-const bucket = config.functionBucket;
-const key = `${packageInfo.name}.zip`;
+const Bucket = process.env.S3_BUCKET || config.functionBucket;
+const s3Prefix = process.env.S3_PREFIX || packageInfo.name;
+const templateKey = `${s3Prefix}/cloudformation.template`;
+const lambdaKey = `${s3Prefix}/lambda.zip`;
+const StackName = process.env.STACK_NAME || packageInfo.name;
 
 module.exports = function(gulp, prefix) {
 	// Upload the function code to S3
-	gulp.task(`${prefix}:upload`, cb => s3
-		.upload({
-			Bucket: bucket,
-			Key: key,
-			Body: fs.createReadStream('dist.zip')
-		})
-		.on('finish', Promise.resolve)
-		.send(cb)
+	gulp.task(`${prefix}:upload`, () => Promise
+		.all([
+			{
+				Key: templateKey,
+				file: './platform/aws/cloudformation.json'
+			},
+			{
+				Key: lambdaKey,
+				file: 'dist.zip'
+			}
+		].map(obj => s3
+			.putObject({
+				Bucket,
+				Key: obj.Key,
+				Body: fs.createReadStream(obj.file)
+			})
+			.promise()
+		))
 	);
 
-	const stackName = process.env.STACK_NAME || packageInfo.name;
-
 	// Deploy the CloudFormation Stack
-	gulp.task(`${prefix}:deployStack`, cb => {
-		cloudFormation.describeStacks({
-			StackName: stackName
-		}, err => {
-			const operation = err ? 'createStack' : 'updateStack';
+	gulp.task(`${prefix}:deployStack`, () => {
+		let operation = 'updateStack';
 
-			cloudFormation[operation]({
-				StackName: stackName,
-				Capabilities: [
-					'CAPABILITY_IAM'
-				],
-				Parameters: [
-					{
-						ParameterKey: 'SourceBucketName',
-						ParameterValue: config.sourceBucket
-					},
-					{
-						ParameterKey: 'DestinationBucketName',
-						ParameterValue: config.destinationBucket
-					},
-					{
-						ParameterKey: 'LambdaS3Bucket',
-						ParameterValue: bucket
-					},
-					{
-						ParameterKey: 'LambdaS3Key',
-						ParameterValue: key
-					}
-				],
-				TemplateBody: fs.readFileSync(
-					path.join(__dirname, 'cloudformation.json'),
-					{
-						encoding: 'utf8'
-					}
-				)
-			}, cb);
-		});
+		const sourceBucket = process.env.CI ? `${StackName}-src` : config.sourceBucket;
+		const destinationBucket = process.env.CI ? `${StackName}-dst` : config.destinationBucket;
+
+		const Parameters = [
+			{
+				ParameterKey: 'SourceBucketName',
+				ParameterValue: sourceBucket
+			},
+			{
+				ParameterKey: 'DestinationBucketName',
+				ParameterValue: destinationBucket
+			},
+			{
+				ParameterKey: 'LambdaS3Bucket',
+				ParameterValue: Bucket
+			},
+			{
+				ParameterKey: 'LambdaS3Key',
+				ParameterValue: lambdaKey
+			}
+		];
+
+		if (process.env.CI)
+			Parameters.push({
+				ParameterKey: 'ExecutionRoleManagedPolicyArn',
+				ParameterValue: process.env.ExecutionRoleManagedPolicyArn
+			});
+
+		// console.log({
+		// 	StackName,
+		// 	Capabilities: [
+		// 		'CAPABILITY_IAM'
+		// 	],
+		// 	Parameters,
+		// 	RoleARN: process.env.CLOUDFORMATION_ROLE_ARN || undefined,
+		// 	TemplateURL: `https://s3.amazonaws.com/${Bucket}/${templateKey}`
+		// });
+		//
+		// return Promise.resolve();
+
+		return cloudFormation
+			.describeStacks({
+				StackName
+			})
+			.promise()
+			.catch(() => operation = 'createStack')
+			.then(() => cloudFormation
+				[operation]({
+					StackName,
+					Capabilities: [
+						'CAPABILITY_IAM'
+					],
+					Parameters,
+					RoleARN: process.env.CLOUDFORMATION_ROLE_ARN || undefined,
+					TemplateURL: `https://s3.amazonaws.com/${Bucket}/${templateKey}`
+				})
+				.promise()
+			)
+			.catch(console.error);
 	});
 
 	// Once the stack is deployed, this will update the function if the code is changed without recreating the stack
 	gulp.task(`${prefix}:updateCode`, () => cloudFormation
 		.describeStackResource({
-			StackName: stackName,
+			StackName,
 			LogicalResourceId: 'Lambda'
 		})
 		.promise()
 		.then(data => lambda
 			.updateFunctionCode({
 				FunctionName: data.StackResourceDetail.PhysicalResourceId,
-				S3Bucket: bucket,
-				S3Key: key
+				S3Bucket: Bucket,
+				S3Key: Key
 			})
 			.promise()
 		)
@@ -115,4 +151,34 @@ module.exports = function(gulp, prefix) {
 		`${prefix}:deployStack`,
 		cb
 	));
+
+	gulp.task(`${prefix}:ci-bootstrap`, () => {
+		const _StackName = `CI-for-${StackName}`;
+		let operation = 'updateStack';
+
+		return cloudFormation
+			.describeStacks({
+				StackName: _StackName
+			})
+			.promise()
+			.catch(() => operation = 'createStack')
+			.then(() => cloudFormation
+				[operation]({
+					StackName: _StackName,
+					Capabilities: [
+						'CAPABILITY_NAMED_IAM'
+					],
+					TemplateBody: fs.readFileSync(
+						path.join(
+							__dirname,
+							'../../test/integration/aws/bootstrap.template'
+						),
+						{
+							encoding: 'utf8'
+						}
+					)
+				})
+				.promise()
+			);
+	});
 };

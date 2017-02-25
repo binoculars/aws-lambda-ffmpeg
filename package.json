@@ -62,7 +62,7 @@
     ]
   },
   "ava": {
-    "files": "test/unit/*.js",
+    "files": "test/unit/**/*.js",
     "require": [
       "babel-register"
     ]
