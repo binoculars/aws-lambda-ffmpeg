@@ -23,6 +23,16 @@ const templateKey = `${s3Prefix}/cloudformation.template`;
 const lambdaKey = `${s3Prefix}/lambda.zip`;
 const StackName = process.env.STACK_NAME || packageInfo.name;
 
+function getCloudFormationOperation(StackName) {
+	return cloudFormation
+		.describeStacks({
+			StackName
+		})
+		.promise()
+		.then(() => 'updateStack')
+		.catch(() => 'createStack')
+}
+
 module.exports = function(gulp, prefix) {
 	// Upload the function code to S3
 	gulp.task(`${prefix}:upload`, () => Promise
@@ -47,8 +57,6 @@ module.exports = function(gulp, prefix) {
 
 	// Deploy the CloudFormation Stack
 	gulp.task(`${prefix}:deployStack`, () => {
-		let operation = 'updateStack';
-
 		const sourceBucket = process.env.CI ? `${StackName}-src` : config.sourceBucket;
 		const destinationBucket = process.env.CI ? `${StackName}-dst` : config.destinationBucket;
 
@@ -77,25 +85,8 @@ module.exports = function(gulp, prefix) {
 				ParameterValue: process.env.ExecutionRoleManagedPolicyArn
 			});
 
-		// console.log({
-		// 	StackName,
-		// 	Capabilities: [
-		// 		'CAPABILITY_IAM'
-		// 	],
-		// 	Parameters,
-		// 	RoleARN: process.env.CLOUDFORMATION_ROLE_ARN || undefined,
-		// 	TemplateURL: `https://s3.amazonaws.com/${Bucket}/${templateKey}`
-		// });
-		//
-		// return Promise.resolve();
-
-		return cloudFormation
-			.describeStacks({
-				StackName
-			})
-			.promise()
-			.catch(() => operation = 'createStack')
-			.then(() => cloudFormation
+		return getCloudFormationOperation(StackName)
+			.then(operation => cloudFormation
 				[operation]({
 					StackName,
 					Capabilities: [
@@ -154,15 +145,9 @@ module.exports = function(gulp, prefix) {
 
 	gulp.task(`${prefix}:ci-bootstrap`, () => {
 		const _StackName = `CI-for-${StackName}`;
-		let operation = 'updateStack';
 
-		return cloudFormation
-			.describeStacks({
-				StackName: _StackName
-			})
-			.promise()
-			.catch(() => operation = 'createStack')
-			.then(() => cloudFormation
+		return getCloudFormationOperation(_StackName)
+			.then(operation => cloudFormation
 				[operation]({
 					StackName: _StackName,
 					Capabilities: [
