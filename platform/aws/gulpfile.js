@@ -97,8 +97,62 @@ module.exports = function(gulp, prefix) {
 					TemplateURL: `https://s3.amazonaws.com/${Bucket}/${templateKey}`
 				})
 				.promise()
+				.then(() => operation === 'createStack' ? 'stackCreateComplete' : 'stackUpdateComplete')
+			)
+			.then(condition => {
+				let lastEvent;
+
+				const interval = setInterval(() => cloudFormation
+					.describeStackEvents({
+						StackName
+					})
+					.promise()
+					.then(data => {
+						const newEvents = [];
+
+						for (const stackEvent of data.StackEvents) {
+							if (stackEvent.EventId === lastEvent)
+								break;
+
+							newEvents.unshift(stackEvent);
+						}
+
+						for (const stackEvent of newEvents) {
+							console.log(
+								[
+									stackEvent.Timestamp,
+									stackEvent.ResourceStatus,
+									stackEvent.ResourceType,
+									stackEvent.LogicalResourceId
+								].join('\t\t')
+							);
+						}
+
+						const firstItem = data.StackEvents[0];
+
+						if (firstItem)
+							lastEvent = firstItem.EventId;
+					}),
+				5e3);
+
+				return cloudFormation
+					.waitFor(condition, {
+						StackName
+					})
+					.promise()
+					.then(() => clearInterval(interval));
+				}
 			)
 			.catch(console.error);
+	});
+
+	gulp.task(`${prefix}:deleteStack`, () => {
+		return cloudFormation
+			.deleteStack({
+				StackName,
+				RoleARN: process.env.CLOUDFORMATION_ROLE_ARN || undefined,
+			})
+			.promise()
 	});
 
 	// Once the stack is deployed, this will update the function if the code is changed without recreating the stack

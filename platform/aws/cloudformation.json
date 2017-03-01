@@ -187,6 +187,7 @@
 		"SourceBucket": {
 			"Type": "AWS::S3::Bucket",
 			"DependsOn": [
+				"Lambda",
 				"LambdaPermission"
 			],
 			"Properties": {

@@ -280,8 +280,7 @@
 							"Effect": "Allow",
 							"Action": [
 								"cloudformation:CreateStack",
-								"cloudformation:UpdateStack",
-								"cloudformation:DeleteStack"
+								"cloudformation:UpdateStack"
 							],
 							"Resource": {
 								"Fn::Join": [
@@ -330,7 +329,46 @@
 						},
 						{
 							"Effect": "Allow",
-							"Action": "cloudformation:DescribeStacks",
+							"Action": [
+								"cloudformation:DeleteStack"
+							],
+							"Resource": {
+								"Fn::Join": [
+									"",
+									[
+										"arn:aws:cloudformation:",
+										{
+											"Ref": "AWS::Region"
+										},
+										":",
+										{
+											"Ref": "AWS::AccountId"
+										},
+										":stack/",
+										{
+											"Ref": "StackPrefix"
+										},
+										"-*"
+									]
+								]
+							},
+							"Condition": {
+								"StringEquals": {
+									"cloudformation:RoleArn": {
+										"Fn::GetAtt": [
+											"ServiceRole",
+											"Arn"
+										]
+									}
+								}
+							}
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"cloudformation:DescribeStackEvents",
+								"cloudformation:DescribeStacks"
+							],
 							"Resource": {
 								"Fn::Join": [
 									"",
