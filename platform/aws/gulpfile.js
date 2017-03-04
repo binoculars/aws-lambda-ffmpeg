@@ -23,6 +23,8 @@ const s3Prefix = process.env.S3_PREFIX || packageInfo.name;
 const templateKey = `${s3Prefix}/cloudformation.template`;
 const lambdaKey = `${s3Prefix}/lambda.zip`;
 const StackName = process.env.STACK_NAME || packageInfo.name;
+const sourceBucket = process.env.CI ? `${StackName}-src` : config.sourceBucket;
+const destinationBucket = process.env.CI ? `${StackName}-dst` : config.destinationBucket;
 const now = new Date();
 
 function getCloudFormationOperation(StackName) {
@@ -157,8 +159,6 @@ module.exports = function(gulp, prefix) {
 
 	// Deploy the CloudFormation Stack
 	gulp.task(`${prefix}:deployStack`, () => {
-		const sourceBucket = process.env.CI ? `${StackName}-src` : config.sourceBucket;
-		const destinationBucket = process.env.CI ? `${StackName}-dst` : config.destinationBucket;
 
 		const Parameters = [
 			{
@@ -224,7 +224,7 @@ module.exports = function(gulp, prefix) {
 			.updateFunctionCode({
 				FunctionName: data.StackResourceDetail.PhysicalResourceId,
 				S3Bucket: Bucket,
-				S3Key: Key
+				S3Key: lambdaKey
 			})
 			.promise()
 		)
@@ -303,4 +303,31 @@ module.exports = function(gulp, prefix) {
 					.join('\n')
 			))
 	});
+
+	gulp.task(`${prefix}:ci-putFile`, () => s3
+		.putObject({
+			Bucket: sourceBucket,
+			Key: 'test.mp4',
+			Body: fs.createReadStream(
+				path.join(
+					__dirname,
+					'../../test/fixtures/good.mp4'
+				)
+			)
+		})
+		.promise()
+	);
+
+	gulp.task(`${prefix}:ci-headFiles`, () => Promise
+		.all([
+			'test.mp4',
+			'test.png'
+		].map(file => s3
+			.headObject({
+				Bucket: destinationBucket,
+				Key: file
+			})
+			.promise()
+		))
+	);
 };

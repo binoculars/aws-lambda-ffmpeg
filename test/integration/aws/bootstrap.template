@@ -367,6 +367,7 @@
 							"Effect": "Allow",
 							"Action": [
 								"cloudformation:DescribeStackEvents",
+								"cloudformation:DescribeStackResource",
 								"cloudformation:DescribeStacks"
 							],
 							"Resource": {
@@ -460,6 +461,30 @@
 									]
 								}
 							]
+						},
+						{
+							"Effect": "Allow",
+							"Action": "lambda:UpdateFunctionCode",
+							"Resource": {
+								"Fn::Join": [
+									"",
+									[
+										"arn:aws:lambda:",
+										{
+											"Ref": "AWS::Region"
+										},
+										":",
+										{
+											"Ref": "AWS::AccountId"
+										},
+										":function:",
+										{
+											"Ref": "StackPrefix"
+										},
+										"-*"
+									]
+								]
+							}
 						}
 					]
 				},
