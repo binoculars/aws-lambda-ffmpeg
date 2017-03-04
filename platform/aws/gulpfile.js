@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const runSequence = require('run-sequence');
+const chalk = require('chalk');
 const AWS = require('aws-sdk');
 
 const s3 = new AWS.S3();
@@ -22,6 +23,7 @@ const s3Prefix = process.env.S3_PREFIX || packageInfo.name;
 const templateKey = `${s3Prefix}/cloudformation.template`;
 const lambdaKey = `${s3Prefix}/lambda.zip`;
 const StackName = process.env.STACK_NAME || packageInfo.name;
+const now = new Date();
 
 function getCloudFormationOperation(StackName) {
 	return cloudFormation
@@ -31,6 +33,104 @@ function getCloudFormationOperation(StackName) {
 		.promise()
 		.then(() => 'updateStack')
 		.catch(() => 'createStack')
+}
+
+function pad(str, n) {
+	const fillAmount = n - str.length;
+
+	return `${str}${fillAmount > 0 ? ' '.repeat(fillAmount) : ''}`;
+}
+
+function colorizeResourceStatus(status) {
+	if (/(FAILED|ROLLBACK)/.test(status))
+		return chalk.red(status);
+	else if (/IN_PROGRESS\s+$/.test(status))
+		return chalk.yellow(status);
+	else if (/COMPLETE\s+$/.test(status))
+		return chalk.green(status);
+
+	return status;
+}
+
+function stackEventToRow(stackEvent) {
+	const mid = [
+		pad(stackEvent.Timestamp, 39),
+		colorizeResourceStatus(pad(stackEvent.ResourceStatus, 20)),
+		pad(stackEvent.ResourceType, 26),
+		pad(stackEvent.LogicalResourceId, 40)
+	].join(' │ ');
+
+	return `│ ${mid} │`
+}
+
+function printEventsAndWaitFor(condition) {
+	let lastEvent;
+
+	const columns = [
+		41,
+		22,
+		28,
+		42
+	];
+
+	const columnChars = columns.map(n => '─'.repeat(n));
+	const tableTopBorder = `┌${columnChars.join('┬')}┐`;
+	const tableBottomBorder = `└${columnChars.join('┴')}┘`;
+	const tableDivider = `├${columnChars.join('┼')}┤`;
+
+	const head = [
+		tableTopBorder,
+		stackEventToRow({
+			Timestamp: 'Timestamp',
+			ResourceStatus: 'Status',
+			ResourceType: 'Type',
+			LogicalResourceId: 'Logical Id'
+		}),
+		tableDivider
+	].join('\n');
+
+	console.log(head);
+
+	// Print the stack events while we're waiting for the stack to complete
+	const interval = setInterval(
+		() => cloudFormation
+			.describeStackEvents({
+				StackName
+			})
+			.promise()
+			.then(data => {
+				const newEvents = [];
+
+				for (const stackEvent of data.StackEvents) {
+					if (stackEvent.EventId === lastEvent || stackEvent.Timestamp < now)
+						break;
+
+					newEvents.unshift(stackEvent);
+				}
+
+				for (const stackEvent of newEvents) {
+					console.log(
+						stackEventToRow(stackEvent)
+					);
+				}
+
+				const firstItem = data.StackEvents[0];
+
+				if (firstItem)
+					lastEvent = firstItem.EventId;
+			}),
+		5e3 // 5 seconds
+	);
+
+	return cloudFormation
+		.waitFor(condition, {
+			StackName
+		})
+		.promise()
+		.then(() => {
+			clearInterval(interval);
+			console.log(tableBottomBorder);
+		});
 }
 
 module.exports = function(gulp, prefix) {
@@ -82,7 +182,7 @@ module.exports = function(gulp, prefix) {
 		if (process.env.CI)
 			Parameters.push({
 				ParameterKey: 'ExecutionRoleManagedPolicyArn',
-				ParameterValue: process.env.ExecutionRoleManagedPolicyArn
+				ParameterValue: process.env.EXECUTION_ROLE_ARN
 			});
 
 		return getCloudFormationOperation(StackName)
@@ -99,50 +199,7 @@ module.exports = function(gulp, prefix) {
 				.promise()
 				.then(() => operation === 'createStack' ? 'stackCreateComplete' : 'stackUpdateComplete')
 			)
-			.then(condition => {
-				let lastEvent;
-
-				const interval = setInterval(() => cloudFormation
-					.describeStackEvents({
-						StackName
-					})
-					.promise()
-					.then(data => {
-						const newEvents = [];
-
-						for (const stackEvent of data.StackEvents) {
-							if (stackEvent.EventId === lastEvent)
-								break;
-
-							newEvents.unshift(stackEvent);
-						}
-
-						for (const stackEvent of newEvents) {
-							console.log(
-								[
-									stackEvent.Timestamp,
-									stackEvent.ResourceStatus,
-									stackEvent.ResourceType,
-									stackEvent.LogicalResourceId
-								].join('\t\t')
-							);
-						}
-
-						const firstItem = data.StackEvents[0];
-
-						if (firstItem)
-							lastEvent = firstItem.EventId;
-					}),
-				5e3);
-
-				return cloudFormation
-					.waitFor(condition, {
-						StackName
-					})
-					.promise()
-					.then(() => clearInterval(interval));
-				}
-			)
+			.then(printEventsAndWaitFor)
 			.catch(console.error);
 	});
 
@@ -153,6 +210,7 @@ module.exports = function(gulp, prefix) {
 				RoleARN: process.env.CLOUDFORMATION_ROLE_ARN || undefined,
 			})
 			.promise()
+			.then(() => printEventsAndWaitFor('stackDeleteComplete'))
 	});
 
 	// Once the stack is deployed, this will update the function if the code is changed without recreating the stack
@@ -197,13 +255,23 @@ module.exports = function(gulp, prefix) {
 		cb
 	));
 
-	gulp.task(`${prefix}:ci-bootstrap`, () => {
-		const _StackName = `CI-for-${StackName}`;
+	const ciStackName = `CI-for-${StackName}`;
 
-		return getCloudFormationOperation(_StackName)
+	gulp.task(`${prefix}:ci-bootstrap`, () => {
+		const StackName = ciStackName;
+
+		const outputEnvMap = new Map([
+			['CIUserAccessKey', 'AWS_ACCESS_KEY_ID'],
+			['ServiceRoleArn', 'CLOUDFORMATION_ROLE_ARN'],
+			['ModulePolicyArn', 'EXECUTION_ROLE_ARN'],
+			['Bucket', 'S3_BUCKET'],
+			['CIUserSecretKey', 'AWS_SECRET_ACCESS_KEY']
+		]);
+
+		return getCloudFormationOperation(StackName)
 			.then(operation => cloudFormation
 				[operation]({
-					StackName: _StackName,
+					StackName,
 					Capabilities: [
 						'CAPABILITY_NAMED_IAM'
 					],
@@ -218,6 +286,21 @@ module.exports = function(gulp, prefix) {
 					)
 				})
 				.promise()
-			);
+				.then(() => operation === 'createStack' ? 'stackCreateComplete' : 'stackUpdateComplete')
+			)
+			.then(printEventsAndWaitFor)
+			.catch(console.error)
+			.then(() => cloudFormation
+				.describeStacks({
+					StackName
+				})
+				.promise()
+			)
+			.then(data => console.log(
+				data.Stacks[0]
+					.Outputs
+					.map(output => `${outputEnvMap.get(output.OutputKey)}=${output.OutputValue}`)
+					.join('\n')
+			))
 	});
 };

@@ -442,6 +442,11 @@
 					"Arn"
 				]
 			}
+		},
+		"ModulePolicyArn": {
+			"Value": {
+				"Ref": "ModulePolicy"
+			}
 		}
 	}
 }
