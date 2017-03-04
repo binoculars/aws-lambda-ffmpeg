@@ -44,9 +44,9 @@ function pad(str, n) {
 function colorizeResourceStatus(status) {
 	if (/(FAILED|ROLLBACK)/.test(status))
 		return chalk.red(status);
-	else if (/IN_PROGRESS\s+$/.test(status))
+	else if (/IN_PROGRESS\s*$/.test(status))
 		return chalk.yellow(status);
-	else if (/COMPLETE\s+$/.test(status))
+	else if (/COMPLETE\s*$/.test(status))
 		return chalk.green(status);
 
 	return status;
@@ -55,7 +55,7 @@ function colorizeResourceStatus(status) {
 function stackEventToRow(stackEvent) {
 	const mid = [
 		pad(stackEvent.Timestamp, 39),
-		colorizeResourceStatus(pad(stackEvent.ResourceStatus, 20)),
+		colorizeResourceStatus(pad(stackEvent.ResourceStatus, 44)),
 		pad(stackEvent.ResourceType, 26),
 		pad(stackEvent.LogicalResourceId, 40)
 	].join(' │ ');
@@ -63,12 +63,12 @@ function stackEventToRow(stackEvent) {
 	return `│ ${mid} │`
 }
 
-function printEventsAndWaitFor(condition) {
+function printEventsAndWaitFor(condition, StackName) {
 	let lastEvent;
 
 	const columns = [
 		41,
-		22,
+		46,
 		28,
 		42
 	];
@@ -199,7 +199,7 @@ module.exports = function(gulp, prefix) {
 				.promise()
 				.then(() => operation === 'createStack' ? 'stackCreateComplete' : 'stackUpdateComplete')
 			)
-			.then(printEventsAndWaitFor)
+			.then(condition => printEventsAndWaitFor(condition, StackName))
 			.catch(console.error);
 	});
 
@@ -210,7 +210,7 @@ module.exports = function(gulp, prefix) {
 				RoleARN: process.env.CLOUDFORMATION_ROLE_ARN || undefined,
 			})
 			.promise()
-			.then(() => printEventsAndWaitFor('stackDeleteComplete'))
+			.then(() => printEventsAndWaitFor('stackDeleteComplete', StackName))
 	});
 
 	// Once the stack is deployed, this will update the function if the code is changed without recreating the stack
@@ -288,7 +288,7 @@ module.exports = function(gulp, prefix) {
 				.promise()
 				.then(() => operation === 'createStack' ? 'stackCreateComplete' : 'stackUpdateComplete')
 			)
-			.then(printEventsAndWaitFor)
+			.then(condition => printEventsAndWaitFor(condition, StackName))
 			.catch(console.error)
 			.then(() => cloudFormation
 				.describeStacks({

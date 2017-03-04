@@ -394,6 +394,72 @@
 							"Effect": "Allow",
 							"Action": "cloudformation:ValidateTemplate",
 							"Resource": "*"
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"s3:PutObject",
+								"s3:DeleteObject"
+							],
+							"Resource": [
+								{
+									"Fn::Join": [
+										"",
+										[
+											"arn:aws:s3:::",
+											{
+												"Ref": "StackPrefix"
+											},
+											"-branch-*-src/*"
+										]
+									]
+								},
+								{
+									"Fn::Join": [
+										"",
+										[
+											"arn:aws:s3:::",
+											{
+												"Ref": "StackPrefix"
+											},
+											"-tag-*-src/*"
+										]
+									]
+								}
+							]
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"s3:GetObject",
+								"s3:DeleteObject"
+							],
+							"Resource": [
+								{
+									"Fn::Join": [
+										"",
+										[
+											"arn:aws:s3:::",
+											{
+												"Ref": "StackPrefix"
+											},
+											"-branch-*-dst/*"
+										]
+									]
+								},
+								{
+									"Fn::Join": [
+										"",
+										[
+											"arn:aws:s3:::",
+											{
+												"Ref": "StackPrefix"
+											},
+											"-tag-*-dst/*"
+										]
+									]
+								}
+							]
 						}
 					]
 				},

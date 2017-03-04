@@ -36,28 +36,32 @@ The [IAM Policy](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/
   * UpdateFunctionConfiguration
 
 ## CI User
+The user responsible for all CI functions
 
 ## CI User Policy
-* IAM
+* IAM - Get and Pass the Service Role for CloudFormation
+  * GetRole
   * PassRole
 * S3
   * PutObject - Upload the CloudFormation Template and Lambda Function
+  * GetObject - Get the CloudFormation Template and Lambda Function
   * DeleteObject - Delete the CloudFormation Template and Lambda Function
 * CloudFormation
   * CreateStack - Create the CloudFormation stack for each branch/tag
-  * DeleteStack - Delete stacks made from tags 
   * UpdateStack - Update previously created stacks
-  * ValidateTemplate - Validate Stack Templates
-  
+* CloudFormation
+  * DeleteStack - Delete stacks made from tags 
+* CloudFormation
+  * DescribeStackEvents - List stack events
+  * DescribeStacks - Get the status of the stack
+* CloudFormation
+  * ValidateTemplate - Validate stack templates
 * S3
-  * PutObject - Upload the test video, delete the result test video and image
-
-
-
-
-
-
-
+  * PutObject - Upload the test video
+  * DeleteObject - Delete the test video
+* S3
+  * GetObject - Get the result test video and image
+  * DeleteObject - Delete the result test video and image
 
 
 # Testing the Function
