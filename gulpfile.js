@@ -3,9 +3,9 @@
 const parse = require('url').parse;
 const https = require('https');
 const fs = require('fs');
+const child_process = require('child_process');
 const path = require('path');
 const gulp = require('gulp');
-const shell = require('gulp-shell');
 const rename = require('gulp-rename');
 const del = require('del');
 const chmod = require('gulp-chmod');
@@ -49,11 +49,8 @@ function request(url, toPipe) {
 }
 
 gulp.task('download-ffmpeg', cb => {
-	try {
-		fs.accessSync(buildDir);
-	} catch (e) {
+	if (!fs.existsSync(buildDir))
 		fs.mkdirSync(buildDir);
-	}
 
 	const file = fs.createWriteStream(filename);
 
@@ -72,9 +69,16 @@ gulp.task('download-ffmpeg', cb => {
 });
 
 // This will probably work well for OS X and Linux, but maybe not Windows without Cygwin.
-gulp.task('untar-ffmpeg', shell.task([
-	`mkdir -p ./build/ffmpeg && tar -zxvf ${filename} -C ./build/ffmpeg`
-]));
+gulp.task('untar-ffmpeg', () => {
+	const dir = './build/ffmpeg';
+
+	if (!fs.existsSync(dir))
+		fs.mkdirSync(dir);
+
+	child_process.execSync(
+		`tar -zxvf ${filename} -C ${dir}`
+	);
+});
 
 gulp.task('copy-ffmpeg', () => {
 	const wd = fs
