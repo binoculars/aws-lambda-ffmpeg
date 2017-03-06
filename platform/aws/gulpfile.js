@@ -9,6 +9,7 @@ const AWS = require('aws-sdk');
 const s3 = new AWS.S3();
 const lambda = new AWS.Lambda();
 const cloudFormation = new AWS.CloudFormation();
+const cloudWatchLogs = new AWS.CloudWatchLogs();
 const packageInfo = require('../../package.json');
 
 let config = {};
@@ -304,30 +305,96 @@ module.exports = function(gulp, prefix) {
 			))
 	});
 
-	gulp.task(`${prefix}:ci-putFile`, () => s3
-		.putObject({
-			Bucket: sourceBucket,
-			Key: 'test.mp4',
-			Body: fs.createReadStream(
-				path.join(
-					__dirname,
-					'../../test/fixtures/good.mp4'
-				)
-			)
-		})
-		.promise()
-	);
-
-	gulp.task(`${prefix}:ci-headFiles`, () => Promise
+	gulp.task(`${prefix}:ci-putFile`, () => Promise
 		.all([
-			'test.mp4',
-			'test.png'
-		].map(file => s3
-			.headObject({
-				Bucket: destinationBucket,
-				Key: file
-			})
-			.promise()
-		))
+			cloudFormation
+				.describeStackResource({
+					StackName,
+					LogicalResourceId: 'Lambda'
+				})
+				.promise(),
+			s3
+				.putObject({
+					Bucket: sourceBucket,
+					Key: 'test.mp4',
+					Body: fs.createReadStream(
+						path.join(
+							__dirname,
+							'../../test/fixtures/good.mp4'
+						)
+					)
+				})
+				.promise()
+		])
+		.then(data => {
+			const lambdaPhysicalId = data[0].StackResourceDetail.PhysicalResourceId;
+			let startTime = now.getTime();
+
+			return new Promise((resolve, reject) => {
+				const interval = setInterval(
+					() => cloudWatchLogs
+						.filterLogEvents({
+							logGroupName: `/aws/lambda/${lambdaPhysicalId}`,
+							startTime,
+							interleaved: false
+						})
+						.promise()
+						.then(data => {
+							const events = data.events;
+
+							for (const event of events) {
+								console.log(event.message.trim());
+
+								if (/^REPORT/.test(event.message)) {
+									clearInterval(interval);
+									resolve();
+									break;
+								}
+							}
+
+							if (events.length)
+								startTime = events[events.length - 1].timestamp + 1;
+						})
+						.catch(reject),
+					3e3
+				);
+			});
+		})
+		.then(() => Promise
+			.all([
+				'test.mp4',
+				'test.png'
+			].map(file => s3
+				.headObject({
+					Bucket: destinationBucket,
+					Key: file
+				})
+				.promise()
+				.then(data => data.ContentType)
+			))
+			.then(console.log)
+		)
+		.then(() => Promise
+			.all([
+				s3
+					.deleteObject({
+						Bucket: sourceBucket,
+						Key: 'test.mp4'
+					})
+					.promise(),
+				s3
+					.deleteObjects({
+						Bucket: destinationBucket,
+						Delete: {
+							Objects: [
+								'test.mp4',
+								'test.png'
+							].map(Key => ({Key}))
+						}
+					})
+					.promise()
+			])
+		)
+		.catch(console.error)
 	);
 };
