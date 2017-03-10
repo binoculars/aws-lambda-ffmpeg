@@ -3,7 +3,7 @@
 process.env['NODE_ENV'] = 'production';
 
 import {spawn, execFile} from 'child_process';
-import {unlinkSync, createReadStream, createWriteStream} from 'fs';
+import {unlink, createReadStream, createWriteStream} from 'fs';
 import {createGzip, Z_BEST_COMPRESSION} from 'zlib';
 import {join} from 'path';
 import {tmpdir} from 'os';
@@ -61,12 +61,12 @@ function ffprobe() {
 
 			log(stdout);
 
-			const outputObj = JSON.parse(stdout);
-			const maxDuration = config.videoMaxDuration;
+			const {streams, format} = JSON.parse(stdout);
+			const {videoMaxDuration} = config;
 
-			const hasVideoStream = outputObj.streams.some(stream =>
-				stream.codec_type === 'video' &&
-				(stream.duration || outputObj.format.duration) <= maxDuration
+			const hasVideoStream = streams.some(({codec_type, duration}) =>
+				codec_type === 'video' &&
+				(duration || format.duration) <= videoMaxDuration
 			);
 
 			if (!hasVideoStream)
@@ -91,7 +91,8 @@ function ffprobe() {
 function ffmpeg(keyPrefix) {
 	log('Starting FFmpeg');
 
-	const description = `${config.linkPrefix}/${keyPrefix}.${config.format.video.extension}`;
+	const {format} = config;
+	const description = `${config.linkPrefix}/${keyPrefix}.${format.video.extension}`;
 	const scaleFilter = `scale='min(${config.videoMaxWidth.toString()}\\,iw):-2'`;
 
 	return new Promise((resolve, reject) => {
@@ -103,11 +104,11 @@ function ffmpeg(keyPrefix) {
 			'-vf', scaleFilter,
 			'-movflags', '+faststart',
 			'-metadata', `description=${description}`,
-			`out.${config.format.video.extension}`,
+			`out.${format.video.extension}`,
 			'-vf', 'thumbnail',
 			'-vf', scaleFilter,
 			'-vframes', '1',
-			`out.${config.format.image.extension}`
+			`out.${format.image.extension}`
 		];
 		const opts = {
 			cwd: tempDir
@@ -121,16 +122,20 @@ function ffmpeg(keyPrefix) {
 }
 
 /**
- * Deletes the download file
+ * Deletes a file
  *
  * @param {!string} localFilePath - The location of the local file
  * @returns {Promise<void>}
  */
-function removeDownload(localFilePath) {
-	log('Deleting download file');
-	unlinkSync(localFilePath);
+function removeFile(localFilePath) {
+	log(`Deleting ${localFilePath}`);
 
-	return Promise.resolve();
+	return new Promise((resolve, reject) => {
+		unlink(
+			localFilePath,
+			(err, result) => err ? reject(err) : resolve(result)
+		);
+	});
 }
 
 /**
@@ -187,10 +192,11 @@ function upload(uploadFunc, fileStream, bucket, key, encoding, mimeType) {
  * @param {!Array<string>} rmFiles - The files to remove after the operation is complete
  */
 function removeFiles(filename, rmFiles) {
-	log(`${filename} complete. Deleting now.`);
+	log(`${filename} complete.`);
 
-	return rmFiles
-		.forEach(unlinkSync);
+	return Promise.all(
+		rmFiles.map(removeFile)
+	);
 }
 
 /**
@@ -215,7 +221,7 @@ async function uploadFile(uploadFunc, keyPrefix, type) {
 		config.gzip ? 'gzip' : null,
 		format.mimeType
 	);
-	return removeFiles(filename, rmFiles);
+	await removeFiles(filename, rmFiles);
 }
 
 /**
@@ -252,16 +258,20 @@ export async function main(library, logger, invocation) {
 	const keyPrefix = sourceLocation.key.replace(/\.[^/.]+$/, '');
 	const localFilePath = join(tempDir, 'download');
 
+	let error = null;
+
 	try {
 		await downloadFile(library.getDownloadStream, sourceLocation, localFilePath);
 		await checkM3u(localFilePath);
 		await ffprobe();
 		await ffmpeg(keyPrefix);
-		await removeDownload(localFilePath);
-		await uploadFiles(library.uploadToBucket, keyPrefix);
-		invocation.callback();
+		await Promise.all([
+			removeFile(localFilePath),
+			uploadFiles(library.uploadToBucket, keyPrefix)
+		]);
+	} catch (e) {
+		error = e;
 	}
-	catch (error) {
-		invocation.callback(error);
-	}
+
+	invocation.callback(error);
 }
