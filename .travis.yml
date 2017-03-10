@@ -21,7 +21,7 @@ before_install:
 
   export STACK_NAME="aws-lambda-ffmpeg-$S3_PREFIX"
 
-  cat <<EOF > ./config/aws.json
+  cat <<EOF > "$TRAVIS_BUILD_DIR/config/aws.json"
   {
     "videoMaxWidth": 320,
     "videoMaxDuration": 30,
