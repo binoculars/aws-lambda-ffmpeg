@@ -20,26 +20,25 @@ before_install:
   fi
 
   export STACK_NAME="aws-lambda-ffmpeg-$S3_PREFIX"
-
-  cat <<EOF > "$TRAVIS_BUILD_DIR/config/aws.json"
+  mkdir ./config
+  ecbo "
   {
-    "videoMaxWidth": 320,
-    "videoMaxDuration": 30,
-    "sourceBucket": "$STACK_NAME-src",
-    "destinationBucket": "$STACK_NAME-dst",
-    "gzip": false,
-    "format": {
-      "image": {
-        "extension": "png",
-        "mimeType": "image/png"
+    \"videoMaxWidth\": 320,
+    \"videoMaxDuration\": 30,
+    \"sourceBucket\": \"$STACK_NAME-src\",
+    \"destinationBucket\": \"$STACK_NAME-dst\",
+    \"gzip\": false,
+    \"format\": {
+      \"image\": {
+        \"extension\": \"png\",
+        \"mimeType\": \"image/png\"
       },
-      "video": {
-        "extension": "mp4",
-        "mimeType": "video/mp4"
+      \"video\": {
+        \"extension\": \"mp4\",
+        \"mimeType\": \"video/mp4\"
       }
     }
-  }
-  EOF
+  }" > ./config/aws.json
 - npm i -g npm@latest gulp && npm -v
 
 before_script:
