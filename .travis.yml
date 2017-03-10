@@ -20,7 +20,7 @@ before_install:
   fi
 
   export STACK_NAME="aws-lambda-ffmpeg-$S3_PREFIX"
-- npm i -g npm@latest gulp && npm -v
+- npm i -g npm@latest && npm i -g gulp && npm -v
 
 before_script:
 - gulp aws:default
