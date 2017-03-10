@@ -1,5 +1,6 @@
 'use strict';
 
+const child_process = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const runSequence = require('run-sequence');

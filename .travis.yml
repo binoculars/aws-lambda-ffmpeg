@@ -10,4 +10,44 @@ cache:
   - $HOME/.cache
 
 before_install:
-- npm i -g npm@latest && npm -v
+- |
+  if [ -f "$TRAVIS_BRANCH" ]; then
+    export S3_PREFIX="branch-$TRAVIS_BRANCH"
+  fi
+
+  if [ -f "$TRAVIS_TAG" ]; then
+    export S3_PREFIX="tag-$TRAVIS_TAG"
+  fi
+
+  export STACK_NAME="aws-lambda-ffmpeg-$S3_PREFIX"
+
+  cat <<EOF > ./config/aws.json
+  {
+    "videoMaxWidth": 320,
+    "videoMaxDuration": 30,
+    "sourceBucket": "$STACK_NAME-src",
+    "destinationBucket": "$STACK_NAME-dst",
+    "gzip": false,
+    "format": {
+      "image": {
+        "extension": "png",
+        "mimeType": "image/png"
+      },
+      "video": {
+        "extension": "mp4",
+        "mimeType": "video/mp4"
+      }
+    }
+  }
+  EOF
+- npm i -g npm@latest gulp && npm -v
+
+before_script:
+- gulp aws:default
+
+script:
+- npm test
+- npm run test-integration
+
+after_script:
+- gulp aws:deleteStack

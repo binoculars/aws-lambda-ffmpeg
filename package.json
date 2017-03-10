@@ -11,7 +11,8 @@
   "main": "index.js",
   "scripts": {
     "postinstall": "./scripts/postinstall.js",
-    "test": "ava"
+    "test": "ava",
+    "test-integration": "ava test/integration/**/*.js"
   },
   "keywords": [
     "aws",
