@@ -12,14 +12,16 @@ cache:
 before_install:
 - |
   if [ -n "$TRAVIS_BRANCH" ]; then
-    export S3_PREFIX="branch-$TRAVIS_BRANCH"
+    export S3_PREFIX="branch-$(echo $TRAVIS_BRANCH | sed -e 's/[^-a-zA-Z]/-/g')"
   fi
 
   if [ -n "$TRAVIS_TAG" ]; then
-    export S3_PREFIX="tag-$TRAVIS_TAG"
+    export S3_PREFIX="tag-$(echo $TRAVIS_TAG | sed -e 's/[^-a-zA-Z]/-/g')"
   fi
 
   export STACK_NAME="aws-lambda-ffmpeg-$S3_PREFIX"
+  export BUILD_DIR="$TRAVIS_BUILD_DIR"
+  $BUILD_DIR/test/integration/aws/config.sh
 - npm i -g npm@latest && npm i -g gulp && npm -v
 
 before_script:
