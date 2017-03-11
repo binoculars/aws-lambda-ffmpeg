@@ -4,11 +4,15 @@
 	"Parameters": {
 		"SourceBucketName": {
 			"Type": "String",
+			"AllowedPattern": "^[a-z]+[a-z.\\-]+[a-z]+$",
+			"MaxLength": "63",
 			"Description": "The S3 source bucket"
 		},
 		"DestinationBucketName": {
 			"Type": "String",
-			"Description": "The S3 source bucket"
+			"AllowedPattern": "^[a-z]+[a-z.\\-]+[a-z]+$",
+			"MaxLength": 63,
+			"Description": "The S3 destination bucket"
 		},
 		"LambdaS3Bucket": {
 			"Type": "String",
@@ -26,6 +30,22 @@
 		}
 	},
 	"Conditions": {
+		"HasNoSourceBucketName": {
+			"Fn::Equals": [
+				{
+					"Ref": "SourceBucketName"
+				},
+				""
+			]
+		},
+		"HasNoDestinationBucketName": {
+			"Fn::Equals": [
+				{
+					"Ref": "SourceBucketName"
+				},
+				""
+			]
+		},
 		"UseInternalExecutionRolePolicy": {
 			"Fn::Equals": [
 				{
@@ -192,7 +212,15 @@
 			],
 			"Properties": {
 				"BucketName": {
-					"Ref": "SourceBucketName"
+					"Fn::If": [
+						"HasNoSourceBucketName",
+						{
+							"Ref": "AWS::NoValue"
+						},
+						{
+							"Ref": "SourceBucketName"
+						}
+					]
 				},
 				"NotificationConfiguration": {
 					"LambdaConfigurations": [
@@ -213,7 +241,15 @@
 			"Type": "AWS::S3::Bucket",
 			"Properties": {
 				"BucketName": {
-					"Ref": "DestinationBucketName"
+					"Fn::If": [
+						"HasNoDestinationBucketName",
+						{
+							"Ref": "AWS::NoValue"
+						},
+						{
+							"Ref": "DestinationBucketName"
+						}
+					]
 				}
 			}
 		}

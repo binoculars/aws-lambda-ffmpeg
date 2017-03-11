@@ -38,7 +38,7 @@ The [IAM Policy](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/
 ## CI User
 The user responsible for all CI functions
 
-## CI User Policy
+## CI Policy
 * IAM - Get and Pass the Service Role for CloudFormation
   * GetRole
   * PassRole
@@ -53,6 +53,7 @@ The user responsible for all CI functions
   * DeleteStack - Delete stacks made from tags 
 * CloudFormation
   * DescribeStackEvents - List stack events
+  * DescribeStackResource - Get stack resource details
   * DescribeStacks - Get the status of the stack
 * CloudFormation
   * ValidateTemplate - Validate stack templates
@@ -62,6 +63,10 @@ The user responsible for all CI functions
 * S3
   * GetObject - Get the result test video and image
   * DeleteObject - Delete the result test video and image
+* Lambda
+  * UpdateFunctionCode
+* CloudWatchLogs
+  * FilterLogEvents - Get Lambda events during CI test
 
 
 # Testing the Function

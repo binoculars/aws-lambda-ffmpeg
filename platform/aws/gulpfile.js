@@ -60,7 +60,7 @@ function stackEventToRow(stackEvent) {
 		pad(stackEvent.Timestamp, 39),
 		colorizeResourceStatus(pad(stackEvent.ResourceStatus, 44)),
 		pad(stackEvent.ResourceType, 26),
-		pad(stackEvent.LogicalResourceId, 40)
+		pad(stackEvent.LogicalResourceId, 40 > StackName.length ? 40 : StackName.length)
 	].join(' │ ');
 
 	return `│ ${mid} │`
@@ -73,7 +73,7 @@ function printEventsAndWaitFor(condition, StackName) {
 		41,
 		46,
 		28,
-		42
+		42 > StackName.length ? 42 : StackName.length + 2
 	];
 
 	const columnChars = columns.map(n => '─'.repeat(n));
@@ -116,6 +116,10 @@ function printEventsAndWaitFor(condition, StackName) {
 						stackEventToRow(stackEvent)
 					);
 				}
+
+				// Timeout of 15 minutes
+				if (new Date() - now > 9e5)
+					process.exit(1);
 
 				const firstItem = data.StackEvents[0];
 
@@ -260,34 +264,70 @@ module.exports = function(gulp, prefix) {
 
 	gulp.task(`${prefix}:ci-bootstrap`, () => {
 		const StackName = ciStackName;
+		const simpleGit = require('simple-git')();
 
 		const outputEnvMap = new Map([
 			['CIUserAccessKey', 'AWS_ACCESS_KEY_ID'],
+			['CIUserSecretKey', 'AWS_SECRET_ACCESS_KEY'],
+			['CIRegion', 'AWS_REGION'],
 			['ServiceRoleArn', 'CLOUDFORMATION_ROLE_ARN'],
 			['ModulePolicyArn', 'EXECUTION_ROLE_ARN'],
-			['Bucket', 'S3_BUCKET'],
-			['CIUserSecretKey', 'AWS_SECRET_ACCESS_KEY']
+			['Bucket', 'S3_BUCKET']
 		]);
 
-		return getCloudFormationOperation(StackName)
-			.then(operation => cloudFormation
-				[operation]({
-					StackName,
-					Capabilities: [
-						'CAPABILITY_NAMED_IAM'
-					],
-					TemplateBody: fs.readFileSync(
-						path.join(
-							__dirname,
-							'../../test/integration/aws/bootstrap.template'
-						),
-						{
-							encoding: 'utf8'
-						}
+		return Promise
+			.all([
+				getCloudFormationOperation(StackName),
+				new Promise((resolve, reject) =>
+					simpleGit.getRemotes(
+						true,
+						(err, data) => err ? reject(err) : resolve(data)
 					)
-				})
-				.promise()
-				.then(() => operation === 'createStack' ? 'stackCreateComplete' : 'stackUpdateComplete')
+				)
+					.then(remotes => {
+						for (const remote of remotes) {
+							const url = remote.refs.fetch;
+
+							// Use GitHub user and repo name for StackPrefix
+							if (/github\.com/.test(url)) {
+								return url
+									.replace(/^.*github.com[:/]/, '')
+									.replace(/\.git$/, '')
+									.replace(/\//g, '-');
+							}
+						}
+
+						return packageInfo.name;
+					})
+		])
+			.then(results => {
+				const operation = results[0];
+				const ParameterValue = results[1];
+
+				return cloudFormation[operation]({
+						StackName,
+						Capabilities: [
+							'CAPABILITY_NAMED_IAM'
+						],
+						Parameters: [
+							{
+								ParameterKey: 'StackPrefix',
+								ParameterValue,
+							}
+						],
+						TemplateBody: fs.readFileSync(
+							path.join(
+								__dirname,
+								'../../test/integration/aws/bootstrap.template'
+							),
+							{
+								encoding: 'utf8'
+							}
+						)
+					})
+						.promise()
+						.then(() => operation === 'createStack' ? 'stackCreateComplete' : 'stackUpdateComplete')
+				}
 			)
 			.then(condition => printEventsAndWaitFor(condition, StackName))
 			.catch(console.error)

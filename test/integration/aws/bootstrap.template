@@ -3,13 +3,12 @@
 	"Description": "Bootstrap template for creating a continuous integration user and permissions",
 	"Parameters": {
 		"StackPrefix": {
-			"Type" : "String",
-			"Default" : "aws-lambda-ffmpeg",
-			"AllowedPattern" : "^[A-Za-z0-9\\-]+$",
-			"MaxLength": "20",
+			"Type": "String",
+			"AllowedPattern": "^[A-Za-z0-9\\-]+$",
+			"MaxLength": "100",
 			"MinLength": "3",
 			"ConstraintDescription": "must contain only alphanumeric characters (case sensitive) and hyphens",
-			"Description" : "The prefix for the stack names for CI, will be combined with branch name"
+			"Description": "The prefix for the stack names for CI, will be combined with branch name"
 		}
 	},
 	"Resources": {
@@ -155,11 +154,11 @@
 										{
 											"Ref": "AWS::AccountId"
 										},
-										":role/",
+										":role/aws-lambda-ffmpeg/",
 										{
 											"Ref": "StackPrefix"
 										},
-										"/*"
+										"*"
 									]
 								]
 							}
@@ -212,20 +211,13 @@
 				]
 			}
 		},
-		"CIUser": {
-			"Type": "AWS::IAM::User",
-			"Properties": {
-				"Path": "/ci/"
-			}
-		},
-		"CIUserPolicy": {
-			"Type": "AWS::IAM::Policy",
+		"CIPolicy": {
+			"Type": "AWS::IAM::ManagedPolicy",
 			"DependsOn": [
-				"ServiceRole",
-				"CIUser"
+				"ServiceRole"
 			],
 			"Properties": {
-				"PolicyName": "root",
+				"Description": "Policy for the CI User",
 				"PolicyDocument": {
 					"Version": "2012-10-17",
 					"Statement": [
@@ -249,32 +241,18 @@
 								"s3:GetObject",
 								"s3:PutObject"
 							],
-							"Resource": [
-								{
-									"Fn::Join": [
-										"",
-										[
-											"arn:aws:s3:::",
-											{
-												"Ref": "Bucket"
-											},
-											"/tag-*/*"
-										]
+							"Resource": {
+								"Fn::Join": [
+									"",
+									[
+										"arn:aws:s3:::",
+										{
+											"Ref": "Bucket"
+										},
+										"/*"
 									]
-								},
-								{
-									"Fn::Join": [
-										"",
-										[
-											"arn:aws:s3:::",
-											{
-												"Ref": "Bucket"
-											},
-											"/branch-*/*"
-										]
-									]
-								}
-							]
+								]
+							}
 						},
 						{
 							"Effect": "Allow",
@@ -402,32 +380,18 @@
 								"s3:PutObject",
 								"s3:DeleteObject"
 							],
-							"Resource": [
-								{
-									"Fn::Join": [
-										"",
-										[
-											"arn:aws:s3:::",
-											{
-												"Ref": "StackPrefix"
-											},
-											"-branch-*-src/*"
-										]
+							"Resource": {
+								"Fn::Join": [
+									"",
+									[
+										"arn:aws:s3:::",
+										{
+											"Ref": "StackPrefix"
+										},
+										"-*-src/*"
 									]
-								},
-								{
-									"Fn::Join": [
-										"",
-										[
-											"arn:aws:s3:::",
-											{
-												"Ref": "StackPrefix"
-											},
-											"-tag-*-src/*"
-										]
-									]
-								}
-							]
+								]
+							}
 						},
 						{
 							"Effect": "Allow",
@@ -435,32 +399,18 @@
 								"s3:GetObject",
 								"s3:DeleteObject"
 							],
-							"Resource": [
-								{
-									"Fn::Join": [
-										"",
-										[
-											"arn:aws:s3:::",
-											{
-												"Ref": "StackPrefix"
-											},
-											"-branch-*-dst/*"
-										]
+							"Resource": {
+								"Fn::Join": [
+									"",
+									[
+										"arn:aws:s3:::",
+										{
+											"Ref": "StackPrefix"
+										},
+										"-*-dst/*"
 									]
-								},
-								{
-									"Fn::Join": [
-										"",
-										[
-											"arn:aws:s3:::",
-											{
-												"Ref": "StackPrefix"
-											},
-											"-tag-*-dst/*"
-										]
-									]
-								}
-							]
+								]
+							}
 						},
 						{
 							"Effect": "Allow",
@@ -511,10 +461,19 @@
 							}
 						}
 					]
-				},
-				"Users": [
+				}
+			}
+		},
+		"CIUser": {
+			"Type": "AWS::IAM::User",
+			"DependsOn": [
+				"CIPolicy"
+			],
+			"Properties": {
+				"Path": "/ci/",
+				"ManagedPolicyArns": [
 					{
-						"Ref": "CIUser"
+						"Ref": "CIPolicy"
 					}
 				]
 			}
@@ -543,6 +502,11 @@
 					"CIUserAccessKey",
 					"SecretAccessKey"
 				]
+			}
+		},
+		"CIRegion": {
+			"Value": {
+				"Ref": "AWS::Region"
 			}
 		},
 		"Bucket": {
