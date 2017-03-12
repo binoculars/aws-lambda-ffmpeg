@@ -21,7 +21,7 @@ before_install:
     export S3_PREFIX="tag-${LOWER//[^a-z0-9]}"
   fi
 
-  export STACK_NAME="$(echo "$TRAVIS_REPO_SLUG" | sed -e 's/[^-a-zA-Z]/-/g')-$S3_PREFIX"
+  export STACK_NAME="${TRAVIS_REPO_SLUG//[^-a-zA-Z]/-}-$S3_PREFIX"
   export BUILD_DIR="$TRAVIS_BUILD_DIR"
   $BUILD_DIR/test/integration/aws/config.sh
 
