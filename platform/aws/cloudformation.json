@@ -4,13 +4,13 @@
 	"Parameters": {
 		"SourceBucketName": {
 			"Type": "String",
-			"AllowedPattern": "^[a-z]+[a-z.\\-]+[a-z]+$",
+			"AllowedPattern": "^[a-z]+[a-z0-9.\\-]+[a-z0-9]$",
 			"MaxLength": "63",
 			"Description": "The S3 source bucket"
 		},
 		"DestinationBucketName": {
 			"Type": "String",
-			"AllowedPattern": "^[a-z]+[a-z.\\-]+[a-z]+$",
+			"AllowedPattern": "^[a-z]+[a-z0-9.\\-]+[a-z0-9]$",
 			"MaxLength": 63,
 			"Description": "The S3 destination bucket"
 		},
