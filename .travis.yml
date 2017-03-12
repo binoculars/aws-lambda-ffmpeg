@@ -29,7 +29,7 @@ before_script:
 - yarn global add gulp
 
 script:
-- npm test
+- yarn test
 - gulp aws:default
 - yarn run test-integration
 - gulp aws:deleteStack
