@@ -143,9 +143,11 @@
 						}
 					]
 				},
-				"Roles": {
-					"Ref": "ExecutionRole"
-				}
+				"Roles": [
+					{
+						"Ref": "ExecutionRole"
+					}
+				]
 			}
 		},
 		"Lambda": {
