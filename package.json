@@ -3,7 +3,7 @@
   "version": "2.3.1",
   "private": true,
   "description": "AWS Lambda function to resize video and generate a thumbnail",
-  "engineStrict": true,
+  "engines-strict": true,
   "engines": {
     "node": ">=4.3",
     "npm": ">=3"
