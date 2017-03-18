@@ -24,8 +24,9 @@ const s3Prefix = process.env.S3_PREFIX || packageInfo.name;
 const templateKey = `${s3Prefix}/cloudformation.template`;
 const lambdaKey = `${s3Prefix}/lambda.zip`;
 const StackName = process.env.STACK_NAME || packageInfo.name;
-const sourceBucket = process.env.CI ? `${StackName}-src` : config.sourceBucket;
-const destinationBucket = process.env.CI ? `${StackName}-dst` : config.destinationBucket;
+const bucketPrefix = StackName.slice(0, 59);
+const sourceBucket = process.env.CI ? `${bucketPrefix}-src` : config.sourceBucket;
+const destinationBucket = process.env.CI ? `${bucketPrefix}-dst` : config.destinationBucket;
 const now = new Date();
 
 function getCloudFormationOperation(StackName) {
