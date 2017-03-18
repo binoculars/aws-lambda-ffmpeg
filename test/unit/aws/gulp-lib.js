@@ -26,8 +26,7 @@ test('A one-line event', t => {
 		t.is(line.length, lineWidth);
 });
 
-
-test('', t => {
+test('A multi-line event', t => {
 	const stackEvent = {
 		Timestamp: new Date(0),
 		ResourceStatus: 'UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS',

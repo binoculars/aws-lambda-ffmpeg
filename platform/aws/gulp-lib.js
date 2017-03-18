@@ -18,6 +18,7 @@ const table = {
 };
 
 /**
+ * Adds padding to the end of a string
  *
  * @param str {string}
  * @param n {number} - Total Length
@@ -28,6 +29,7 @@ function pad(str, n) {
 }
 
 /**
+ * Gets the chalk color for the CloudFormation Resource Status
  *
  * @param status {string}
  * @returns {string}
@@ -44,10 +46,20 @@ function getResourceStatusColor(status) {
 }
 
 /**
+ * Converts an array of cells to a row
+ *
+ * @param cells {![string]}
+ * @returns {string}
+ */
+function cellsToRow(cells) {
+	return `│ ${cells.join(' │ ')} │`;
+}
+
+/**
  * Converts a stack event to a table row
  *
- * @param stackEvent {object}
- * @param stackEvent.Timestamp {date}
+ * @param stackEvent {!object}
+ * @param stackEvent.Timestamp {!date}
  * @param stackEvent.ResourceStatus {string}
  * @param stackEvent.ResourceType {string}
  * @param stackEvent.LogicalResourceId {string}
@@ -82,13 +94,13 @@ function stackEventToRow(stackEvent) {
 			line.push(`${open}${value}${close}`);
 		}
 
-		lines.push(`│ ${line.join(' │ ')} │`);
+		lines.push(cellsToRow(line));
 	}
 
 	return lines.join('\n');
 }
 
-const headRow = [
+const headCells = [
 	'Timestamp',
 	'Status',
 	'Type',
@@ -97,7 +109,7 @@ const headRow = [
 
 const head = [
 	table.borderTop,
-	`│ ${headRow.join(' │ ')} │`,
+	cellsToRow(headCells),
 	table.divider
 ].join('\n');
 
