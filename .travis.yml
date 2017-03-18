@@ -22,6 +22,7 @@ before_install:
   fi
 
   export STACK_NAME="${TRAVIS_REPO_SLUG//[^-a-zA-Z]/-}-$S3_PREFIX"
+  export BUCKET_PREFIX="${STACK_NAME:0:59}"
   export BUILD_DIR="$TRAVIS_BUILD_DIR"
   $BUILD_DIR/test/integration/aws/config.sh
 

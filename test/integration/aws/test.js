@@ -9,11 +9,12 @@ const cloudWatchLogs = new AWS.CloudWatchLogs();
 const s3 = new AWS.S3();
 
 const {
-	STACK_NAME: StackName
+	STACK_NAME: StackName,
+	BUCKET_PREFIX: bucketPrefix
 } = process.env;
 
-const sourceBucket = `${StackName}-src`;
-const destinationBucket = `${StackName}-dst`;
+const sourceBucket = `${bucketPrefix}-src`;
+const destinationBucket = `${bucketPrefix}-dst`;
 
 test('Test the Lambda function', async t => {
 	let startTime = Date.now();
