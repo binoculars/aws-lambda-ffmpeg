@@ -12,21 +12,11 @@ const cloudFormation = new AWS.CloudFormation();
 const packageInfo = require('../../package.json');
 const lib = require('./gulp-lib');
 
-let config = {};
-try {
-	config = require('../../config/aws.json');
-} catch (ex) {
-	config = {};
-}
-
-const Bucket = process.env.S3_BUCKET || config.functionBucket;
-const s3Prefix = process.env.S3_PREFIX || packageInfo.name;
+const Bucket = process.env.CFN_S3_BUCKET;
+const s3Prefix = process.env.CFN_S3_PREFIX || packageInfo.name;
 const templateKey = `${s3Prefix}/cloudformation.template`;
 const lambdaKey = `${s3Prefix}/lambda.zip`;
 const StackName = process.env.STACK_NAME || packageInfo.name;
-const bucketPrefix = process.env.BUCKET_PREFIX;
-const sourceBucket = process.env.CI ? `${bucketPrefix}-src` : config.sourceBucket;
-const destinationBucket = process.env.CI ? `${bucketPrefix}-dst` : config.destinationBucket;
 const now = new Date();
 
 function getCloudFormationOperation(StackName) {
@@ -117,11 +107,11 @@ module.exports = function(gulp, prefix) {
 		const Parameters = [
 			{
 				ParameterKey: 'SourceBucketName',
-				ParameterValue: sourceBucket
+				ParameterValue: process.env.SOURCE_BUCKET
 			},
 			{
 				ParameterKey: 'DestinationBucketName',
-				ParameterValue: destinationBucket
+				ParameterValue: process.env.DESTINATION_BUCKET
 			},
 			{
 				ParameterKey: 'LambdaS3Bucket',
@@ -130,6 +120,22 @@ module.exports = function(gulp, prefix) {
 			{
 				ParameterKey: 'LambdaS3Key',
 				ParameterValue: lambdaKey
+			},
+			{
+				ParameterKey: 'FFMPEG_ARGS',
+				ParameterValue: process.env.FFMPEG_ARGS
+			},
+			{
+				ParameterKey: 'GZIP',
+				ParameterValue: process.env.GZIP
+			},
+			{
+				ParameterKey: 'MIME_TYPES',
+				ParameterValue: process.env.MIME_TYPES
+			},
+			{
+				ParameterKey: 'VIDEO_MAX_DURATION',
+				ParameterValue: process.env.VIDEO_MAX_DURATION
 			}
 		];
 
@@ -221,7 +227,7 @@ module.exports = function(gulp, prefix) {
 			['CIRegion', 'AWS_REGION'],
 			['ServiceRoleArn', 'CLOUDFORMATION_ROLE_ARN'],
 			['ModulePolicyArn', 'EXECUTION_ROLE_ARN'],
-			['Bucket', 'S3_BUCKET']
+			['Bucket', 'CFN_S3_BUCKET']
 		]);
 
 		return Promise
@@ -293,4 +299,12 @@ module.exports = function(gulp, prefix) {
 					.join('\n')
 			))
 	});
+
+	gulp.task(`${prefix}:create-cfn-bucket`, () => s3
+		.createBucket({
+			Bucket
+		})
+		.promise()
+		.catch(console.error)
+	);
 };

@@ -23,6 +23,25 @@
 			"AllowedPattern": ".*\\.zip",
 			"Description": "The S3 key for the lambda function code"
 		},
+		"FFMPEG_ARGS": {
+			"Type": "String",
+			"Description": "The arguments for the FFmpeg command"
+		},
+		"MIME_TYPES": {
+			"Type": "String",
+			"Description": "A JSON map of extensions to MIME types"
+		},
+		"GZIP": {
+			"Type": "String",
+			"AllowedPattern": "^(true|false)$",
+			"Description": "Whether to use gzip or not"
+		},
+		"VIDEO_MAX_DURATION": {
+			"Type": "String",
+			"AllowedPattern": "^\\d+(\\.\\d+)*$",
+			"Default": "30",
+			"Description": "The maximum duration of a video, in seconds"
+		},
 		"ExecutionRoleManagedPolicyArn": {
 			"Type": "String",
 			"Default": "",
@@ -172,8 +191,20 @@
 				},
 				"Environment": {
 					"Variables": {
-						"destinationBucket": {
+						"DESTINATION_BUCKET": {
 							"Ref": "DestinationBucketName"
+						},
+						"FFMPEG_ARGS": {
+							"Ref": "FFMPEG_ARGS"
+						},
+						"GZIP": {
+							"Ref": "GZIP"
+						},
+						"MIME_TYPES": {
+							"Ref": "MIME_TYPES"
+						},
+						"VIDEO_MAX_DURATION": {
+							"Ref": "VIDEO_MAX_DURATION"
 						}
 					}
 				},
