@@ -3,7 +3,7 @@
 process.env['NODE_ENV'] = 'production';
 
 import {spawn, execFile} from 'child_process';
-import {unlink, createReadStream, createWriteStream} from 'fs';
+import {unlink, createReadStream, createWriteStream, readdirSync, existsSync, mkdirSync} from 'fs';
 import {createGzip, Z_BEST_COMPRESSION} from 'zlib';
 import {join} from 'path';
 import {tmpdir} from 'os';
@@ -11,8 +11,30 @@ import {checkM3u} from './lib';
 
 /** @type string **/
 const tempDir = process.env['TEMP'] || tmpdir();
-const config = require(process.env.CONFIG_FILE || './config.json');
 let log = console.log;
+
+const extensionRegex = /\.(\w+)$/;
+
+function getExtension(filename) {
+	return filename.match(extensionRegex)[1];
+}
+
+const outputDir = join(tempDir, 'outputs');
+
+if (!existsSync(outputDir))
+	mkdirSync(outputDir);
+
+const {
+	DESTINATION_BUCKET,
+	FFMPEG_ARGS,
+	USE_GZIP,
+	MIME_TYPES,
+	VIDEO_MAX_DURATION,
+} = process.env;
+
+const mimeTypes = JSON.parse(MIME_TYPES);
+const useGzip = USE_GZIP === 'true';
+const videoMaxDuration = +VIDEO_MAX_DURATION;
 
 /**
  * Downloads the file to the local temp directory
@@ -62,7 +84,6 @@ function ffprobe() {
 			log(stdout);
 
 			const {streams, format} = JSON.parse(stdout);
-			const {videoMaxDuration} = config;
 
 			const hasVideoStream = streams.some(({codec_type, duration}) =>
 				codec_type === 'video' &&
@@ -91,27 +112,17 @@ function ffprobe() {
 function ffmpeg(keyPrefix) {
 	log('Starting FFmpeg');
 
-	const {format} = config;
-	const description = `${config.linkPrefix}/${keyPrefix}.${format.video.extension}`;
-	const scaleFilter = `scale='min(${config.videoMaxWidth.toString()}\\,iw):-2'`;
-
 	return new Promise((resolve, reject) => {
 		const args = [
 			'-y',
 			'-loglevel', 'warning',
-			'-i', 'download',
-			'-c:a', 'copy',
-			'-vf', scaleFilter,
-			'-movflags', '+faststart',
-			'-metadata', `description=${description}`,
-			`out.${format.video.extension}`,
-			'-vf', 'thumbnail',
-			'-vf', scaleFilter,
-			'-vframes', '1',
-			`out.${format.image.extension}`
+			'-i', '../download',
+			...FFMPEG_ARGS
+				.replace('$KEY_PREFIX', keyPrefix)
+				.split(' ')
 		];
 		const opts = {
-			cwd: tempDir
+			cwd: outputDir
 		};
 		
 		spawn('ffmpeg', args, opts)
@@ -169,59 +180,36 @@ function encode(filename, gzip, rmFiles) {
 }
 
 /**
- * Uploads the file
- *
- * @param {!function} uploadFunc - The function to upload a processed file
- * @param {!module:fs~ReadStream} fileStream - The stream of a processed file
- * @param {!string} bucket - The remote bucket
- * @param {!string} key - The remote key/file path
- * @param {string} encoding - The Content Encoding
- * @param {string} mimeType - The MIME Type of the file
- * @returns {Promise}
- */
-function upload(uploadFunc, fileStream, bucket, key, encoding, mimeType) {
-	log(`Uploading ${mimeType}`);
-
-	return uploadFunc(bucket, key, fileStream, encoding, mimeType);
-}
-
-/**
- * Deletes the local output files
- *
- * @param {!string} filename - The name of the file
- * @param {!Array<string>} rmFiles - The files to remove after the operation is complete
- */
-function removeFiles(filename, rmFiles) {
-	log(`${filename} complete.`);
-
-	return Promise.all(
-		rmFiles.map(removeFile)
-	);
-}
-
-/**
  * Transforms, uploads, and deletes an output file
  *
  * @param {!function} uploadFunc - The function to upload a processed file minus extension)
  * @param {!string} keyPrefix - The filename without the extension
- * @param {!string} type - The output file type, as specified in the configuration
+ * @param {!string} filename - A file from the output directory
  * @returns {Promise}
  */
-async function uploadFile(uploadFunc, keyPrefix, type) {
-	const format = config.format[type];
-	const filename = join(tempDir, `out.${format.extension}`);
-	const rmFiles = [filename];
+async function uploadFile(uploadFunc, keyPrefix, filename) {
+	const extension = getExtension(filename);
+	const mimeType = mimeTypes[extension];
+	const fileFullPath = join(outputDir, filename);
+	const rmFiles = [fileFullPath];
 
-	const fileStream = await encode(filename, config.gzip, rmFiles);
-	await upload(
-		uploadFunc,
+	const fileStream = await encode(fileFullPath, useGzip, rmFiles);
+
+	log(`Uploading ${mimeType}`);
+
+	await uploadFunc(
+		DESTINATION_BUCKET,
+		`${keyPrefix}.${extension}`,
 		fileStream,
-		config.destinationBucket,
-		`${keyPrefix}.${format.extension}`,
-		config.gzip ? 'gzip' : null,
-		format.mimeType
+		useGzip ? 'gzip' : null,
+		mimeType
 	);
-	await removeFiles(filename, rmFiles);
+
+	log(`${mimeType} ${filename} complete.`);
+
+	await Promise.all(
+		rmFiles.map(removeFile)
+	);
 }
 
 /**
@@ -231,12 +219,12 @@ async function uploadFile(uploadFunc, keyPrefix, type) {
  * @param {!string} keyPrefix - The prefix for the key (filename minus extension)
  * @returns {Promise}
  */
+
 function uploadFiles(uploadFunc, keyPrefix) {
-	return Promise
-		.all(Object
-			.keys(config.format)
-			.map(type => uploadFile(uploadFunc, keyPrefix, type))
-		);
+	return Promise.all(
+		readdirSync(outputDir)
+			.map(filename => uploadFile(uploadFunc, keyPrefix, filename))
+	);
 }
 
 /**

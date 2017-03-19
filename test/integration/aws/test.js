@@ -69,20 +69,24 @@ test('Test the Lambda function', async t => {
 		interval = setInterval(printEvents, 3e3);
 	});
 
-	await Promise
-		.all([
-			['test.mp4', 'video/mp4'],
-			['test.png', 'image/png']
-		].map(async ([Key, expected]) => {
-			const {ContentType} = await s3
-				.headObject({
-					Bucket: destinationBucket,
-					Key
-				})
-				.promise();
+	try {
+		await Promise
+			.all([
+				['test.mp4', 'video/mp4'],
+				['test.png', 'image/png']
+			].map(async([Key, expected]) => {
+				const {ContentType} = await s3
+					.headObject({
+						Bucket: destinationBucket,
+						Key
+					})
+					.promise();
 
-			t.is(ContentType, expected, 'Result object does not exist');
-		}));
+				t.is(ContentType, expected, 'Result object does not exist');
+			}));
+	} catch(error) {
+		t.fail('One or more objects does not exist');
+	}
 
 	await Promise
 		.all([

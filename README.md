@@ -73,7 +73,12 @@ At minimum, you need to modify:
 export AWS_ACCESS_KEY_ID=AKIDEXAMPLE
 export AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY
 export AWS_REGION=us-east-1
-export CONFIG_FILE=../config/aws.json
+export DESTINATION_BUCKET=destination-bucket
+# Note that the following variable is single-quote escaped. Use $KEY_PREFIX to get the filename minus the extension.
+export FFMPEG_ARGS=$'-c:a copy -vf scale=\'min(320\\,iw):-2\' -movflags +faststart -metadata description=http://my.site/$KEY_PREFIX.mp4 out.mp4 -vf thumbnail -vf scale=\'min(320\\,iw):-2\' -vframes 1 out.png'
+export USE_GZIP=false
+export MIME_TYPES='{"png":"image/png","mp4":"video/mp4"}'
+export VIDEO_MAX_DURATION='30'
 # Node version
 nvm use 4.3.2 # This is subject to change
 # Babel-node test script
@@ -81,7 +86,24 @@ node node_modules/babel-cli/bin/babel-node.js test/aws.js
 ```
 
 ### Gulp
-Be sure to create your functionBucket first (e.g. `aws s3 mb s3://function-bucket` or in the console)
+
+#### Task: `aws:create-cfn-bucket`
+Creates the CloudFormation for your CloudFormation template and Lambda function code. **Run this once**, the result of
+this goes in environment variable, `CFN_S3_BUCKET`
+
+#### Environment Settings
+The following environment variables must be set prior to using the rest of the gulp commands
+
+```bash
+export CFN_S3_BUCKET=cloudformation-bucket
+export SOURCE_BUCKET=source-bucket
+export DESTINATION_BUCKET=destination-bucket
+# Note that the following variable is single-quote escaped. Use $KEY_PREFIX to get the filename minus the extension.
+export FFMPEG_ARGS=$'-c:a copy -vf scale=\'min(320\\,iw):-2\' -movflags +faststart -metadata description=http://my.site/$KEY_PREFIX.mp4 out.mp4 -vf thumbnail -vf scale=\'min(320\\,iw):-2\' -vframes 1 out.png'
+export USE_GZIP=false # can be true or false
+export MIME_TYPES='{"png":"image/png","mp4":"video/mp4"}' # must be a JSON object with "extension": "mimeType" as the key/value pairs
+export VIDEO_MAX_DURATION='30' # must be a number
+```
 
 #### Task: `aws:default`
 Everything you need to get started. Note: You can change the stack name by setting environment variable `STACK_NAME`.

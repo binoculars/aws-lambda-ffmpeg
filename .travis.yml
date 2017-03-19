@@ -13,18 +13,22 @@ before_install:
 - |
   if [ -n "$TRAVIS_BRANCH" ]; then
     LOWER=${TRAVIS_BRANCH,,}
-    export S3_PREFIX="branch-${LOWER//[^a-z0-9]}"
+    export CFN_S3_PREFIX="branch-${LOWER//[^a-z0-9]}"
   fi
 
   if [ -n "$TRAVIS_TAG" ]; then
     LOWER=${$TRAVIS_TAG,,}
-    export S3_PREFIX="tag-${LOWER//[^a-z0-9]}"
+    export CFN_S3_PREFIX="tag-${LOWER//[^a-z0-9]}"
   fi
 
-  export STACK_NAME="${TRAVIS_REPO_SLUG//[^-a-zA-Z]/-}-$S3_PREFIX"
+  export STACK_NAME="${TRAVIS_REPO_SLUG//[^-a-zA-Z]/-}-$CFN_S3_PREFIX"
   export BUCKET_PREFIX="${STACK_NAME:0:59}"
-  export BUILD_DIR="$TRAVIS_BUILD_DIR"
-  $BUILD_DIR/test/integration/aws/config.sh
+  export SOURCE_BUCKET="$BUCKET_PREFIX-src"
+  export DESTINATION_BUCKET="$BUCKET_PREFIX-dst"
+  export FFMPEG_ARGS=$'-c:a copy -vf scale=\'min(320\\,iw):-2\' -movflags +faststart -metadata description=http://my.site/$KEY_PREFIX.mp4 out.mp4 -vf thumbnail -vf scale=\'min(320\\,iw):-2\' -vframes 1 out.png'
+  export USE_GZIP=false
+  export MIME_TYPES='{"png":"image/png","mp4":"video/mp4"}'
+  export VIDEO_MAX_DURATION='30'
 
 before_script:
 - yarn global add gulp
