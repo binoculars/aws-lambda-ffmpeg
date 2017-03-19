@@ -1,3 +1,6 @@
+# 2.3.1
+- bugfix: CloudFormation template - ExecutionRolePolicy property roles must be an array 
+
 # 2.3.0
 - maintenance: Update dependencies
 - feature: Use Yarn package manager

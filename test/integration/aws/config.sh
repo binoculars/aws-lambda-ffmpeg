@@ -6,8 +6,8 @@ cat <<EOF > $BUILD_DIR/config/aws.json
 {
 	"videoMaxWidth": 320,
 	"videoMaxDuration": 30,
-	"sourceBucket": "$STACK_NAME-src",
-	"destinationBucket": "$STACK_NAME-dst",
+	"sourceBucket": "$BUCKET_PREFIX-src",
+	"destinationBucket": "$BUCKET_PREFIX-dst",
 	"gzip": false,
 	"format": {
 		"image": {

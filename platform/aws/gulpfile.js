@@ -4,13 +4,13 @@ const child_process = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const runSequence = require('run-sequence');
-const chalk = require('chalk');
 const AWS = require('aws-sdk');
 
 const s3 = new AWS.S3();
 const lambda = new AWS.Lambda();
 const cloudFormation = new AWS.CloudFormation();
 const packageInfo = require('../../package.json');
+const lib = require('./gulp-lib');
 
 let config = {};
 try {
@@ -24,8 +24,9 @@ const s3Prefix = process.env.S3_PREFIX || packageInfo.name;
 const templateKey = `${s3Prefix}/cloudformation.template`;
 const lambdaKey = `${s3Prefix}/lambda.zip`;
 const StackName = process.env.STACK_NAME || packageInfo.name;
-const sourceBucket = process.env.CI ? `${StackName}-src` : config.sourceBucket;
-const destinationBucket = process.env.CI ? `${StackName}-dst` : config.destinationBucket;
+const bucketPrefix = process.env.BUCKET_PREFIX;
+const sourceBucket = process.env.CI ? `${bucketPrefix}-src` : config.sourceBucket;
+const destinationBucket = process.env.CI ? `${bucketPrefix}-dst` : config.destinationBucket;
 const now = new Date();
 
 function getCloudFormationOperation(StackName) {
@@ -38,61 +39,8 @@ function getCloudFormationOperation(StackName) {
 		.catch(() => 'createStack')
 }
 
-function pad(str, n) {
-	const fillAmount = n - str.length;
-
-	return `${str}${fillAmount > 0 ? ' '.repeat(fillAmount) : ''}`;
-}
-
-function colorizeResourceStatus(status) {
-	if (/(FAILED|ROLLBACK)/.test(status))
-		return chalk.red(status);
-	else if (/IN_PROGRESS\s*$/.test(status))
-		return chalk.yellow(status);
-	else if (/COMPLETE\s*$/.test(status))
-		return chalk.green(status);
-
-	return status;
-}
-
-function stackEventToRow(stackEvent) {
-	const mid = [
-		pad(stackEvent.Timestamp, 39),
-		colorizeResourceStatus(pad(stackEvent.ResourceStatus, 44)),
-		pad(stackEvent.ResourceType, 26),
-		pad(stackEvent.LogicalResourceId, 40 > StackName.length ? 40 : StackName.length)
-	].join(' │ ');
-
-	return `│ ${mid} │`
-}
-
 function printEventsAndWaitFor(condition, StackName) {
 	let lastEvent;
-
-	const columns = [
-		41,
-		46,
-		28,
-		42 > StackName.length ? 42 : StackName.length + 2
-	];
-
-	const columnChars = columns.map(n => '─'.repeat(n));
-	const tableTopBorder = `┌${columnChars.join('┬')}┐`;
-	const tableBottomBorder = `└${columnChars.join('┴')}┘`;
-	const tableDivider = `├${columnChars.join('┼')}┤`;
-
-	const head = [
-		tableTopBorder,
-		stackEventToRow({
-			Timestamp: 'Timestamp',
-			ResourceStatus: 'Status',
-			ResourceType: 'Type',
-			LogicalResourceId: 'Logical Id'
-		}),
-		tableDivider
-	].join('\n');
-
-	console.log(head);
 
 	// Print the stack events while we're waiting for the stack to complete
 	const interval = setInterval(
@@ -113,7 +61,7 @@ function printEventsAndWaitFor(condition, StackName) {
 
 				for (const stackEvent of newEvents) {
 					console.log(
-						stackEventToRow(stackEvent)
+						lib.stackEventToRow(stackEvent)
 					);
 				}
 
@@ -129,6 +77,8 @@ function printEventsAndWaitFor(condition, StackName) {
 		5e3 // 5 seconds
 	);
 
+	console.log(lib.head);
+
 	return cloudFormation
 		.waitFor(condition, {
 			StackName
@@ -136,7 +86,7 @@ function printEventsAndWaitFor(condition, StackName) {
 		.promise()
 		.then(() => {
 			clearInterval(interval);
-			console.log(tableBottomBorder);
+			console.log(lib.table.borderBottom);
 		});
 }
 
@@ -164,7 +114,6 @@ module.exports = function(gulp, prefix) {
 
 	// Deploy the CloudFormation Stack
 	gulp.task(`${prefix}:deployStack`, () => {
-
 		const Parameters = [
 			{
 				ParameterKey: 'SourceBucketName',
