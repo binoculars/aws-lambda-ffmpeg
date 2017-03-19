@@ -76,7 +76,7 @@ export AWS_REGION=us-east-1
 export DESTINATION_BUCKET=destination-bucket
 # Note that the following variable is single-quote escaped
 export FFMPEG_ARGS=$'-c:a copy -vf scale\\=\'min(320\,iw):-2\' -movflags +faststart -metadata description\=http://my.site/$KEY_PREFIX.mp4 out.mp4 -vf thumbnail -vf scale\\=\'min(320\,iw):-2\' -vframes 1 out.png'
-export GZIP=false
+export USE_GZIP=false
 export MIME_TYPES='{"png":"image/png","mp4":"video/mp4"}'
 export VIDEO_MAX_DURATION='30'
 # Node version
@@ -100,7 +100,7 @@ export SOURCE_BUCKET=source-bucket
 export DESTINATION_BUCKET=destination-bucket
 # Note that the following variable is single-quote escaped
 export FFMPEG_ARGS=$'-c:a copy -vf scale\\=\'min(320\,iw):-2\' -movflags +faststart -metadata description\=http://my.site/$KEY_PREFIX.mp4 out.mp4 -vf thumbnail -vf scale\\=\'min(320\,iw):-2\' -vframes 1 out.png'
-export GZIP=false # can be true or false
+export USE_GZIP=false # can be true or false
 export MIME_TYPES='{"png":"image/png","mp4":"video/mp4"}' # must be a JSON object with "extension": "mimeType" as the key/value pairs
 export VIDEO_MAX_DURATION='30' # must be a number
 ```

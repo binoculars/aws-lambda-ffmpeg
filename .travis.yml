@@ -26,7 +26,7 @@ before_install:
   export SOURCE_BUCKET="$BUCKET_PREFIX-src"
   export DESTINATION_BUCKET="$BUCKET_PREFIX-dst"
   export FFMPEG_ARGS=$'-c:a copy -vf scale\\=\'min(320\,iw):-2\' -movflags +faststart -metadata description\=http://my.site/$KEY_PREFIX.mp4 out.mp4 -vf thumbnail -vf scale\\=\'min(320\,iw):-2\' -vframes 1 out.png'
-  export GZIP=false
+  export USE_GZIP=false
   export MIME_TYPES='{"png":"image/png","mp4":"video/mp4"}'
   export VIDEO_MAX_DURATION='30'
 

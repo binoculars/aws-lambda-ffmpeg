@@ -27,13 +27,13 @@ if (!existsSync(outputDir))
 const {
 	DESTINATION_BUCKET,
 	FFMPEG_ARGS,
-	GZIP,
+	USE_GZIP,
 	MIME_TYPES,
 	VIDEO_MAX_DURATION,
 } = process.env;
 
 const mimeTypes = JSON.parse(MIME_TYPES);
-const useGzip = GZIP === 'true';
+const useGzip = USE_GZIP === 'true';
 const videoMaxDuration = +VIDEO_MAX_DURATION;
 
 /**

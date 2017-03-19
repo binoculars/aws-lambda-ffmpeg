@@ -126,8 +126,8 @@ module.exports = function(gulp, prefix) {
 				ParameterValue: process.env.FFMPEG_ARGS
 			},
 			{
-				ParameterKey: 'GZIP',
-				ParameterValue: process.env.GZIP
+				ParameterKey: 'USE_GZIP',
+				ParameterValue: process.env.USE_GZIP
 			},
 			{
 				ParameterKey: 'MIME_TYPES',

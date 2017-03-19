@@ -31,7 +31,7 @@
 			"Type": "String",
 			"Description": "A JSON map of extensions to MIME types"
 		},
-		"GZIP": {
+		"USE_GZIP": {
 			"Type": "String",
 			"AllowedPattern": "^(true|false)$",
 			"Description": "Whether to use gzip or not"
@@ -197,8 +197,8 @@
 						"FFMPEG_ARGS": {
 							"Ref": "FFMPEG_ARGS"
 						},
-						"GZIP": {
-							"Ref": "GZIP"
+						"USE_GZIP": {
+							"Ref": "USE_GZIP"
 						},
 						"MIME_TYPES": {
 							"Ref": "MIME_TYPES"
