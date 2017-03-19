@@ -74,8 +74,8 @@ export AWS_ACCESS_KEY_ID=AKIDEXAMPLE
 export AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY
 export AWS_REGION=us-east-1
 export DESTINATION_BUCKET=destination-bucket
-# Note that the following variable is single-quote escaped
-export FFMPEG_ARGS=$'-c:a copy -vf scale\\=\'min(320\,iw):-2\' -movflags +faststart -metadata description\=http://my.site/$KEY_PREFIX.mp4 out.mp4 -vf thumbnail -vf scale\\=\'min(320\,iw):-2\' -vframes 1 out.png'
+# Note that the following variable is single-quote escaped. Use $KEY_PREFIX to get the filename minus the extension.
+export FFMPEG_ARGS=$'-c:a copy -vf scale=\'min(320\\,iw):-2\' -movflags +faststart -metadata description=http://my.site/$KEY_PREFIX.mp4 out.mp4 -vf thumbnail -vf scale=\'min(320\\,iw):-2\' -vframes 1 out.png'
 export USE_GZIP=false
 export MIME_TYPES='{"png":"image/png","mp4":"video/mp4"}'
 export VIDEO_MAX_DURATION='30'
@@ -98,8 +98,8 @@ The following environment variables must be set prior to using the rest of the g
 export CFN_S3_BUCKET=cloudformation-bucket
 export SOURCE_BUCKET=source-bucket
 export DESTINATION_BUCKET=destination-bucket
-# Note that the following variable is single-quote escaped
-export FFMPEG_ARGS=$'-c:a copy -vf scale\\=\'min(320\,iw):-2\' -movflags +faststart -metadata description\=http://my.site/$KEY_PREFIX.mp4 out.mp4 -vf thumbnail -vf scale\\=\'min(320\,iw):-2\' -vframes 1 out.png'
+# Note that the following variable is single-quote escaped. Use $KEY_PREFIX to get the filename minus the extension.
+export FFMPEG_ARGS=$'-c:a copy -vf scale=\'min(320\\,iw):-2\' -movflags +faststart -metadata description=http://my.site/$KEY_PREFIX.mp4 out.mp4 -vf thumbnail -vf scale=\'min(320\\,iw):-2\' -vframes 1 out.png'
 export USE_GZIP=false # can be true or false
 export MIME_TYPES='{"png":"image/png","mp4":"video/mp4"}' # must be a JSON object with "extension": "mimeType" as the key/value pairs
 export VIDEO_MAX_DURATION='30' # must be a number
