@@ -23,20 +23,20 @@
 			"AllowedPattern": ".*\\.zip",
 			"Description": "The S3 key for the lambda function code"
 		},
-		"FFMPEG_ARGS": {
+		"FFmpegArgs": {
 			"Type": "String",
 			"Description": "The arguments for the FFmpeg command"
 		},
-		"MIME_TYPES": {
+		"MimeTypes": {
 			"Type": "String",
 			"Description": "A JSON map of extensions to MIME types"
 		},
-		"USE_GZIP": {
+		"UseGzip": {
 			"Type": "String",
 			"AllowedPattern": "^(true|false)$",
 			"Description": "Whether to use gzip or not"
 		},
-		"VIDEO_MAX_DURATION": {
+		"VideoMaxDuration": {
 			"Type": "String",
 			"AllowedPattern": "^\\d+(\\.\\d+)*$",
 			"Default": "30",
@@ -195,16 +195,16 @@
 							"Ref": "DestinationBucketName"
 						},
 						"FFMPEG_ARGS": {
-							"Ref": "FFMPEG_ARGS"
+							"Ref": "FFmpegArgs"
 						},
 						"USE_GZIP": {
-							"Ref": "USE_GZIP"
+							"Ref": "UseGzip"
 						},
 						"MIME_TYPES": {
-							"Ref": "MIME_TYPES"
+							"Ref": "MimeTypes"
 						},
 						"VIDEO_MAX_DURATION": {
-							"Ref": "VIDEO_MAX_DURATION"
+							"Ref": "VideoMaxDuration"
 						}
 					}
 				},

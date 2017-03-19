@@ -122,19 +122,19 @@ module.exports = function(gulp, prefix) {
 				ParameterValue: lambdaKey
 			},
 			{
-				ParameterKey: 'FFMPEG_ARGS',
+				ParameterKey: 'FFmpegArgs',
 				ParameterValue: process.env.FFMPEG_ARGS
 			},
 			{
-				ParameterKey: 'USE_GZIP',
+				ParameterKey: 'UseGzip',
 				ParameterValue: process.env.USE_GZIP
 			},
 			{
-				ParameterKey: 'MIME_TYPES',
+				ParameterKey: 'MimeTypes',
 				ParameterValue: process.env.MIME_TYPES
 			},
 			{
-				ParameterKey: 'VIDEO_MAX_DURATION',
+				ParameterKey: 'VideoMaxDuration',
 				ParameterValue: process.env.VIDEO_MAX_DURATION
 			}
 		];
