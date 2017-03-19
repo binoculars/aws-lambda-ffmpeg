@@ -2,6 +2,10 @@
 
 [![Dependency Status](https://david-dm.org/binoculars/aws-lambda-ffmpeg.svg)](https://david-dm.org/binoculars/aws-lambda-ffmpeg)
 [![devDependency Status](https://david-dm.org/binoculars/aws-lambda-ffmpeg/dev-status.svg)](https://david-dm.org/binoculars/aws-lambda-ffmpeg#info=devDependencies)
+[![Known Vulnerabilities](https://snyk.io/test/github/binoculars/aws-lambda-ffmpeg/badge.svg)](https://snyk.io/test/github/binoculars/aws-lambda-ffmpeg)
+
+- Master: [![Build Status](https://travis-ci.org/binoculars/aws-lambda-ffmpeg.svg?branch=master)](https://travis-ci.org/binoculars/aws-lambda-ffmpeg)
+- Develop: [![Build Status](https://travis-ci.org/binoculars/aws-lambda-ffmpeg.svg?branch=develop)](https://travis-ci.org/binoculars/aws-lambda-ffmpeg)
 
 The different platforms have different naming conventions for their services. To simplify this, listed below is a *proposed* table of generalized terms that are platform-independent.
 
@@ -43,6 +47,11 @@ At minimum, you need to modify:
 - `destinationBucket` - The name of the bucket that will be used to store the output video and thumbnail image.
 
 ## Local Testing
+
+### Unit Tests
+- Run `npm test`
+
+### Integration Tests
 - [Install FFmpeg locally](https://ffmpeg.org/download.html) or use the [compilation guide](https://trac.ffmpeg.org/wiki/CompilationGuide)
 - Edit `event/{platform}.json` and run `node test/{platform}.js`, where platform is (aws|msa|gcp)
 - When switching among the platforms, reinstall the node modules if the runtime supports a different version of Node.js.
@@ -68,28 +77,29 @@ export CONFIG_FILE=../config/aws.json
 # Node version
 nvm use 4.3.2 # This is subject to change
 # Babel-node test script
-node node_modules/babel-cli/bin/babel-node.js --presets es2015-node4 test/aws.js
+node node_modules/babel-cli/bin/babel-node.js test/aws.js
 ```
 
 ### Gulp
+Be sure to create your functionBucket first (e.g. `aws s3 mb s3://function-bucket` or in the console)
 
 #### Task: `aws:default`
-Everything you need to get started
+Everything you need to get started. Note: You can change the stack name by setting environment variable `STACK_NAME`.
 - Runs the `aws:build-upload` task
 - Runs the `aws:deployStack` task
 
 #### Task: `aws:build-upload`
 - Builds `dist.zip`
- - Downloads and extracts FFmpeg binaries
- - Transpiles, installs dependencies, and copies configuration
+  - Downloads and extracts FFmpeg binaries
+  - Transpiles, installs dependencies, and copies configuration
 - Uploads `dist.zip` to the function's S3 bucket
 
 #### Task: `aws:deployStack`
 - Creates or updates the CloudFormation stack which includes:
- - The lambda function's execution role and policy
- - The lambda function
- - The source bucket (where videos are uploaded to), including the notification configuration
- - The destination bucket (where videos and thumbnails go after they are processed)
+  - The lambda function's execution role and policy
+  - The lambda function
+  - The source bucket (where videos are uploaded to), including the notification configuration
+  - The destination bucket (where videos and thumbnails go after they are processed)
 
 #### Task: `aws:update`
 Run after modifying anything in the function or configuration, if you've already created the stack. This will rebuild `dist.zip`, upload it to S3, and update the lambda function created during the CloudFormation stack creation.
@@ -111,7 +121,7 @@ export GCLOUD_PROJECT=example-project-name
 export GOOGLE_APPLICATION_CREDENTIALS=/path/to/credentials.json
 export CONFIG_FILE=../config/gcp.json
 # Node version
-nvm use 0.12.7 # This is subject to change
+nvm use 6.9.1 # This is subject to change
 # Babel-node test script
 node node_modules/babel-cli/bin/babel-node.js --presets es2015 test/gcp.js
 ```

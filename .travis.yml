@@ -1,0 +1,35 @@
+language: node_js
+node_js: '4.3.2'
+
+sudo: false
+dist: trusty
+
+cache:
+  directories:
+  - node_modules
+  - $HOME/.cache
+
+before_install:
+- |
+  if [ -n "$TRAVIS_BRANCH" ]; then
+    LOWER=${TRAVIS_BRANCH,,}
+    export S3_PREFIX="branch-${LOWER//[^a-z0-9]}"
+  fi
+
+  if [ -n "$TRAVIS_TAG" ]; then
+    LOWER=${$TRAVIS_TAG,,}
+    export S3_PREFIX="tag-${LOWER//[^a-z0-9]}"
+  fi
+
+  export STACK_NAME="${TRAVIS_REPO_SLUG//[^-a-zA-Z]/-}-$S3_PREFIX"
+  export BUILD_DIR="$TRAVIS_BUILD_DIR"
+  $BUILD_DIR/test/integration/aws/config.sh
+
+before_script:
+- yarn global add gulp
+
+script:
+- yarn test
+- gulp aws:default
+- yarn run test-integration
+- gulp aws:deleteStack

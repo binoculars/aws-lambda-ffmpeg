@@ -1,9 +1,9 @@
 process.env['PATH'] += ':' + process.env['CODE_LOCATION'];
 process.env['GCLOUD_PROJECT'] = process.env['GCLOUD_PROJECT'] || process.env['GCP_PROJECT'];
 
-import * as gloud from 'gcloud';
+import * as gcloud from 'google-cloud';
 
-const gcs = gloud.storage();
+const gcs = gcloud.storage();
 
 /**
  * Creates a readable stream from a GCS Object reference
@@ -23,10 +23,9 @@ export function getDownloadStream(bucket, key) {
 /**
  * Normalizes the location of a cloud storage object for GCS
  *
- * @param {!{
- *     bucket: !string
- *     name: !string
- * }} event
+ * @param {!Object} event
+ * @param {!string} event.bucket
+ * @param {!string} event.name
  * @returns {{bucket: {string}, key: {string}}}
  */
 export function getFileLocation(event) {

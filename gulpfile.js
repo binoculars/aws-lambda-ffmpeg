@@ -1,10 +1,11 @@
 'use strict';
 
+const parse = require('url').parse;
 const https = require('https');
 const fs = require('fs');
+const child_process = require('child_process');
 const path = require('path');
 const gulp = require('gulp');
-const shell = require('gulp-shell');
 const rename = require('gulp-rename');
 const del = require('del');
 const chmod = require('gulp-chmod');
@@ -13,34 +14,71 @@ const zip = require('gulp-zip');
 const babel = require('gulp-babel');
 
 const buildDir = 'build';
-const filename = path.join(buildDir, 'ffmpeg-git-64bit-static.tar.xz');
-const fileURL = 'https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-64bit-static.tar.xz';
+const filename = path.join(buildDir, 'ffmpeg-build-lambda.tar.gz');
+const releaseUrl = 'https://api.github.com/repos/binoculars/ffmpeg-build-lambda/releases/latest';
+
+const packageJson = require('./package.json');
+
+function request(url, toPipe) {
+	const options = parse(url);
+	options.headers = {
+		'User-Agent': 'node'
+	};
+
+	return new Promise((resolve, reject) => {
+		const req = https.get(options, response => {
+			if (response.statusCode < 200 || response.statusCode > 299) {
+				if (response.statusCode === 302)
+					return request(response.headers.location, toPipe);
+
+				return reject(new Error('Failed to load page, status code: ' + response.statusCode));
+			}
+
+			let body = '';
+
+			if (toPipe)
+				response.pipe(toPipe);
+			else
+				response.on('data', chunk => body += chunk);
+
+			response.on('end', () => resolve(body));
+		});
+
+		req.on('error', reject);
+	});
+}
 
 gulp.task('download-ffmpeg', cb => {
-	try {
-		fs.accessSync(buildDir);
-	} catch (e) {
+	if (!fs.existsSync(buildDir))
 		fs.mkdirSync(buildDir);
-	}
 
 	const file = fs.createWriteStream(filename);
 
-	https.get(fileURL, response => {
-		response.pipe(file);
-
-		file.on('finish', () => {
-			file.close();
-			cb();
-		})
+	file.on('finish', () => {
+		file.close();
+		cb();
 	});
+
+	request(releaseUrl)
+		.then(JSON.parse)
+		.then(result => {
+			const fileUrl = result.assets[0].browser_download_url;
+
+			return request(fileUrl, file);
+		});
 });
 
-// Resorting to using a shell task. Tried a number of other things including
-// LZMA-native, node-xz, decompress-tarxz. None of them work very well with this.
 // This will probably work well for OS X and Linux, but maybe not Windows without Cygwin.
-gulp.task('untar-ffmpeg', shell.task([
-	`tar -xvf ${filename} -C ./build`
-]));
+gulp.task('untar-ffmpeg', () => {
+	const dir = './build/ffmpeg';
+
+	if (!fs.existsSync(dir))
+		fs.mkdirSync(dir);
+
+	child_process.execSync(
+		`tar -zxvf ${filename} -C ${dir}`
+	);
+});
 
 gulp.task('copy-ffmpeg', () => {
 	const wd = fs
@@ -88,7 +126,7 @@ gulp.task('zip', () => gulp
 		'!**/*.md',
 		'dist/.*'
 	])
-	.pipe(chmod(555))
+	.pipe(chmod(0o555))
 	.pipe(zip('dist.zip'))
 	.pipe(gulp.dest('./'))
 );
@@ -104,6 +142,7 @@ fs.readdirSync(baseDir)
 		gulp.task(`${platform}:transpile`, () => gulp
 			.src([
 				'common.js',
+				'lib.js',
 				`${platform}/index.js`,
 				`${platform}/lib.js`
 			], {
@@ -112,9 +151,19 @@ fs.readdirSync(baseDir)
 			})
 			.pipe(babel({
 				presets: [
-					// TODO remove this when GCF updates to Node v4
-					platform === 'gcp' ? 'es2015' : 'es2015-node4'
-				]
+					[
+						'env',
+						{
+							targets: {
+								node: platform === 'aws' ? 4.3 : 6.9
+							},
+							exclude: packageJson.babel.presets[0][1].exclude
+						}
+					]
+				],
+				env: 'production',
+				comments: false,
+				compact: true
 			}))
 			.pipe(gulp.dest('dist'))
 		);
