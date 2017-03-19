@@ -10,7 +10,7 @@ export function checkM3u(file, cwd) {
 			}
 		)
 			.on('close', code =>
-				code === 0 ? reject(code) : resolve(code)
+				code === 0 ? reject('File looks like an M3U, bailing out') : resolve(code)
 			)
 	);
 }
