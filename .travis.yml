@@ -1,14 +1,11 @@
 language: node_js
-node_js: '4.3.2'
-
+node_js: 4.3.2
 sudo: false
 dist: trusty
-
 cache:
   directories:
   - node_modules
   - $HOME/.cache
-
 before_install:
 - |
   if [ -n "$TRAVIS_BRANCH" ]; then
@@ -29,12 +26,24 @@ before_install:
   export USE_GZIP=false
   export MIME_TYPES='{"png":"image/png","mp4":"video/mp4"}'
   export VIDEO_MAX_DURATION='30'
-
 before_script:
 - yarn global add gulp
-
 script:
 - yarn test
 - gulp aws:default
 - yarn run test-integration
 - gulp aws:deleteStack
+after_success:
+- cp dist.zip $TRAVIS_BUILD_DIR/lambda.zip
+- cp platform/aws/cloudformation.json $TRAVIS_BUILD_DIR/cloudformation.template
+deploy:
+  provider: releases
+  api_key:
+    secure: puFiceSPSkmj00qkFWWKryxMEbT5Ok3rUA74cps5OGlqHlNnNFGpwa87n2T21/xWNE2zRMbago/qE00BOxR8kq+an64y8OATO3Y54nXLsROBD+AydBMNa20EzDZV4dpesI/F7UlsTFCyts5ozAZ1mVW3Tz3W1QY0RC0t1GAUkTA=
+  file:
+  - lambda.zip
+  - cloudformation.template
+  skip_cleanup: true
+  on:
+    tags: true
+    repo: binoculars/aws-lambda-ffmpeg
