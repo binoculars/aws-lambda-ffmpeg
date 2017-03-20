@@ -16,6 +16,8 @@ The different platforms have different naming conventions for their services. To
 | Storage Path | S3 Key | Blob Name | GCS File |
 
 # Function Process Overview
+
+[![Greenkeeper badge](https://badges.greenkeeper.io/binoculars/aws-lambda-ffmpeg.svg)](https://greenkeeper.io/)
 1. A video file is uploaded to the source storage location
 1. A notification event triggers the function
 1. The function downloads the video file from the source location
