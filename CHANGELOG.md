@@ -1,3 +1,9 @@
+# 3.0.0
+- feature: Use Lambda environment variables instead of config.json (breaking change)
+- feature: Limit columns for logs
+- bugfix: Clean up after integration test failure
+- maintenance: Update dependencies, now using greenkeeper
+
 # 2.3.1
 - bugfix: CloudFormation template - ExecutionRolePolicy property roles must be an array 
 
