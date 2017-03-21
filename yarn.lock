@@ -557,15 +557,15 @@ ava@^0.18.2:
     unique-temp-dir "^1.0.0"
     update-notifier "^1.0.0"
 
-aws-sdk-on-lambda@*:
-  version "2.7.10"
-  resolved "https://registry.yarnpkg.com/aws-sdk-on-lambda/-/aws-sdk-on-lambda-2.7.10.tgz#03a7b36dc444c9ef426e11515b311210f21fdf16"
+aws-sdk-on-lambda@binoculars/aws-sdk-js-on-lambda:
+  version "2.22.0"
+  resolved "https://codeload.github.com/binoculars/aws-sdk-js-on-lambda/tar.gz/6ec243ac80769edf1fff8aaa98fb11334ce00c3f"
   dependencies:
-    aws-sdk "2.7.10"
+    aws-sdk "2.22.0"
 
-aws-sdk@2.7.10:
-  version "2.7.10"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.7.10.tgz#d914ca2bdb6ff8b48cdbc20d617b7c6b6031c138"
+aws-sdk@2.22.0:
+  version "2.22.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.22.0.tgz#f7b67d5ece7e67c36f9d3d55e137872572e5c998"
   dependencies:
     buffer "4.9.1"
     crypto-browserify "1.0.9"
@@ -4104,7 +4104,7 @@ request@2.76.0:
     tough-cookie "~2.3.0"
     tunnel-agent "~0.4.1"
 
-request@^2.61.0, request@^2.72.0, request@^2.74.0, request@^2.79.0:
+request@^2.61.0, request@^2.72.0, request@^2.79.0:
   version "2.81.0"
   resolved "https://registry.yarnpkg.com/request/-/request-2.81.0.tgz#c6928946a0e06c5f8d6f8a9333469ffda46298a0"
   dependencies:
@@ -4131,7 +4131,7 @@ request@^2.61.0, request@^2.72.0, request@^2.74.0, request@^2.79.0:
     tunnel-agent "^0.6.0"
     uuid "^3.0.0"
 
-request@~2.74.0:
+request@^2.74.0, request@~2.74.0:
   version "2.74.0"
   resolved "https://registry.yarnpkg.com/request/-/request-2.74.0.tgz#7693ca768bbb0ea5c8ce08c084a45efa05b892ab"
   dependencies:
@@ -4629,7 +4629,7 @@ util-deprecate@~1.0.1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/util-deprecate/-/util-deprecate-1.0.2.tgz#450d4dc9fa70de732762fbd2d4a28981419a0ccf"
 
-uuid@3.0.0, uuid@^3.0.0:
+uuid@3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.0.0.tgz#6728fc0459c450d796a99c31837569bdf672d728"
 
@@ -4637,7 +4637,7 @@ uuid@^2.0.1:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-2.0.3.tgz#67e2e863797215530dff318e5bf9dcebfd47b21a"
 
-uuid@^3.0.1:
+uuid@^3.0.0, uuid@^3.0.1:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.0.1.tgz#6544bba2dfda8c1cf17e629a3a305e2bb1fee6c1"
 
