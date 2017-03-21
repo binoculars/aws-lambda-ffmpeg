@@ -163,15 +163,14 @@ module.exports = function(gulp, prefix) {
 			.catch(console.error);
 	});
 
-	gulp.task(`${prefix}:deleteStack`, () => {
-		return cloudFormation
-			.deleteStack({
-				StackName,
-				RoleARN: process.env.CLOUDFORMATION_ROLE_ARN || undefined,
-			})
-			.promise()
-			.then(() => printEventsAndWaitFor('stackDeleteComplete', StackName))
-	});
+	gulp.task(`${prefix}:deleteStack`, () => cloudFormation
+		.deleteStack({
+			StackName,
+			RoleARN: process.env.CLOUDFORMATION_ROLE_ARN || undefined,
+		})
+		.promise()
+		.then(() => printEventsAndWaitFor('stackDeleteComplete', StackName))
+	);
 
 	// Once the stack is deployed, this will update the function if the code is changed without recreating the stack
 	gulp.task(`${prefix}:updateCode`, () => cloudFormation

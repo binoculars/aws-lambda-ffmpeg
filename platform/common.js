@@ -11,6 +11,8 @@ import {checkM3u} from './lib';
 
 /** @type string **/
 const tempDir = process.env['TEMP'] || tmpdir();
+const download = join(tempDir, 'download');
+
 let log = console.log;
 
 const extensionRegex = /\.(\w+)$/;
@@ -41,10 +43,9 @@ const videoMaxDuration = +VIDEO_MAX_DURATION;
  *
  * @param {!function} downloadFunc - The platform library's download function
  * @param {{bucket: !string, key: !string}} sourceLocation - The location of the remote file
- * @param {!string} download - The location of the local file
  * @returns {Promise}
  */
-function downloadFile(downloadFunc, sourceLocation, download) {
+function downloadFile(downloadFunc, sourceLocation) {
 	return new Promise((resolve, reject) => {
 		log(`Starting download: ${sourceLocation.bucket} / ${sourceLocation.key}`);
 
@@ -244,17 +245,16 @@ export async function main(library, logger, invocation) {
 	log = logger.log;
 	const sourceLocation = library.getFileLocation(invocation.event);
 	const keyPrefix = sourceLocation.key.replace(/\.[^/.]+$/, '');
-	const localFilePath = join(tempDir, 'download');
 
 	let error = null;
 
 	try {
-		await downloadFile(library.getDownloadStream, sourceLocation, localFilePath);
-		await checkM3u(localFilePath);
+		await downloadFile(library.getDownloadStream, sourceLocation);
+		await checkM3u(download);
 		await ffprobe();
 		await ffmpeg(keyPrefix);
 		await Promise.all([
-			removeFile(localFilePath),
+			removeFile(download),
 			uploadFiles(library.uploadToBucket, keyPrefix)
 		]);
 	} catch (e) {
