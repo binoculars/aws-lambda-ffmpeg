@@ -192,7 +192,9 @@ module.exports = function(gulp, prefix) {
 	// Builds the function and uploads
 	gulp.task(`${prefix}:build-upload`, cb => runSequence(
 		'clean',
-		['download-ffmpeg', `${prefix}:source`, 'npm'],
+		'download-ffmpeg',
+		`${prefix}:source`,
+		'npm',
 		'untar-ffmpeg',
 		'copy-ffmpeg',
 		'zip',
