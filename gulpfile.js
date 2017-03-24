@@ -155,7 +155,7 @@ fs.readdirSync(baseDir)
 						'env',
 						{
 							targets: {
-								node: platform === 'aws' ? 4.3 : 6.9
+								node: platform === 'aws' ? 6.10 : 6.9
 							},
 							exclude: packageJson.babel.presets[0][1].exclude
 						}
