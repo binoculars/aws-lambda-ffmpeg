@@ -1,21 +1,21 @@
 process.env['PATH'] += ':' + process.env['LAMBDA_TASK_ROOT'];
 
-import {S3} from 'aws-sdk';
+import S3 from 'aws-sdk/clients/s3';
 
 const s3 = new S3();
 
 /**
  * Creates a readable stream from an S3 Object reference
  *
- * @param {!string} bucket - The S3 Bucket
- * @param {!string} key - The S3 Key
+ * @param {!string} Bucket - The S3 Bucket
+ * @param {!string} Key - The S3 Key
  * @returns {Object}
  */
-export function getDownloadStream(bucket, key) {
+export function getDownloadStream(Bucket, Key) {
 	return s3
 		.getObject({
-			Bucket: bucket,
-			Key: key
+			Bucket,
+			Key
 		})
 		.on('error', (error) => Promise.reject(`S3 Download Error: ${error}`))
 		.createReadStream();
@@ -33,41 +33,35 @@ export function getDownloadStream(bucket, key) {
  * @param {!string} event.Records[].s3.object.key
  * @returns {{bucket: string, key: string}}
  */
-export function getFileLocation(event) {
-	const s3Event = event.Records[0].s3;
-	
+export function getFileLocation({Records: [{s3: {bucket, object}}]}) {
 	return {
-		bucket: s3Event.bucket.name,
-		key: decodeURIComponent(s3Event.object.key).replace(/\+/g, ' ')
+		bucket: bucket.name,
+		key: decodeURIComponent(object.key).replace(/\+/g, ' ')
 	};
 }
 
 /**
  * Uploads a file to an S3 Bucket
  *
- * @param {!string} bucket - The S3 bucket name
- * @param {!string} key - The S3 key
- * @param {!module:fs~ReadStream} fileStream - The file stream to upload
+ * @param {!string} Bucket - The S3 bucket name
+ * @param {!string} Key - The S3 key
+ * @param {!module:fs~ReadStream} Body - The file stream to upload
  * @param {string} contentEncoding - The Content-Encoding of the file (gzip or none)
- * @param {!string} contentType - The Content-Type of the file (e.g. video/mp4)
+ * @param {!string} ContentType - The Content-Type of the file (e.g. video/mp4)
  * @returns Promise
  */
-export function uploadToBucket(bucket, key, fileStream, contentEncoding, contentType) {
-	const params = {
-		Bucket: bucket,
-		Key: key,
-		Body: fileStream,
-		ContentType: contentType,
-		CacheControl: 'max-age=31536000' // 1 year (60 * 60 * 24 * 365)
-	};
-
-	if (contentEncoding)
-		params.ContentEncoding = contentEncoding;
-
+export function uploadToBucket(Bucket, Key, Body, contentEncoding, ContentType) {
 	return s3
-		.putObject(params)
-		.on('httpUploadProgress', evt => {
-			console.log(contentType, 'Progress:', evt.loaded, '/', evt.total, Math.round(100 * evt.loaded / evt.total) + '%');
+		.putObject({
+			Bucket,
+			Key,
+			Body,
+			ContentType,
+			ContentEncoding: contentEncoding || undefined,
+			CacheControl: 'max-age=31536000' // 1 year (60 * 60 * 24 * 365)
+		})
+		.on('httpUploadProgress', ({loaded, total}) => {
+			console.log(ContentType, 'Progress:', loaded, '/', total, `${Math.round(100 * loaded / total)}%`);
 		})
 		.promise();
 }

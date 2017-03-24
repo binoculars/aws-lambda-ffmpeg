@@ -13,8 +13,8 @@ export function handler(event, context, callback) {
 	console.log(`Reading options from event:\n${inspect(event, {depth: 5})}`);
 
 	main(lib, console, {
-		event: event,
-		context: context,
-		callback: callback
+		event,
+		context,
+		callback
 	});
 }

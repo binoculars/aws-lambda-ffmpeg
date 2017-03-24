@@ -27,8 +27,10 @@ function request(url, toPipe) {
 
 	return new Promise((resolve, reject) => {
 		const req = https.get(options, response => {
-			if (response.statusCode < 200 || response.statusCode > 299) {
-				if (response.statusCode === 302)
+			const {statusCode} = response;
+
+			if (statusCode < 200 || statusCode > 299) {
+				if (statusCode === 302)
 					return request(response.headers.location, toPipe);
 
 				return reject(new Error('Failed to load page, status code: ' + response.statusCode));
@@ -61,11 +63,7 @@ gulp.task('download-ffmpeg', cb => {
 
 	request(releaseUrl)
 		.then(JSON.parse)
-		.then(result => {
-			const fileUrl = result.assets[0].browser_download_url;
-
-			return request(fileUrl, file);
-		});
+		.then(({assets: [{browser_download_url}]}) => request(browser_download_url, file));
 });
 
 // This will probably work well for OS X and Linux, but maybe not Windows without Cygwin.
@@ -81,12 +79,12 @@ gulp.task('untar-ffmpeg', () => {
 });
 
 gulp.task('copy-ffmpeg', () => {
-	const wd = fs
+	const [wd] = fs
 		.readdirSync(buildDir)
 		.filter(item => fs
 			.statSync(path.join(buildDir, item))
 			.isDirectory()
-		)[0];
+		);
 
 	return gulp
 		.src([

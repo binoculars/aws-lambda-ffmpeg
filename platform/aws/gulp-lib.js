@@ -65,16 +65,16 @@ function cellsToRow(cells) {
  * @param stackEvent.LogicalResourceId {string}
  * @returns {string}
  */
-function stackEventToRow(stackEvent) {
+function stackEventToRow({Timestamp, ResourceStatus, ResourceType, LogicalResourceId}) {
 	const cells = [
-		stackEvent.Timestamp.toISOString(),
-		stackEvent.ResourceStatus,
-		stackEvent.ResourceType,
-		stackEvent.LogicalResourceId
+		Timestamp.toISOString(),
+		ResourceStatus,
+		ResourceType,
+		LogicalResourceId
 	].map((val, i) => val.match(new RegExp(`.{1,${columns[i]}}`, 'g')));
 
 	const style = chalk.styles[
-		getResourceStatusColor(stackEvent.ResourceStatus)
+		getResourceStatusColor(ResourceStatus)
 	];
 
 	const maxLines = cells

@@ -12,11 +12,25 @@ const cloudFormation = new AWS.CloudFormation();
 const packageInfo = require('../../package.json');
 const lib = require('./gulp-lib');
 
-const Bucket = process.env.CFN_S3_BUCKET;
-const s3Prefix = process.env.CFN_S3_PREFIX || packageInfo.name;
+const {
+	CFN_S3_BUCKET: Bucket,
+	CFN_S3_PREFIX,
+	STACK_NAME,
+	SOURCE_BUCKET,
+	DESTINATION_BUCKET,
+	FFMPEG_ARGS,
+	USE_GZIP,
+	MIME_TYPES,
+	VIDEO_MAX_DURATION,
+	EXECUTION_ROLE_ARN,
+	CI,
+	CLOUDFORMATION_ROLE_ARN,
+} = process.env;
+
+const s3Prefix = CFN_S3_PREFIX || packageInfo.name;
 const templateKey = `${s3Prefix}/cloudformation.template`;
 const lambdaKey = `${s3Prefix}/lambda.zip`;
-const StackName = process.env.STACK_NAME || packageInfo.name;
+const StackName = STACK_NAME || packageInfo.name;
 const now = new Date();
 
 function getCloudFormationOperation(StackName) {
@@ -39,10 +53,10 @@ function printEventsAndWaitFor(condition, StackName) {
 				StackName
 			})
 			.promise()
-			.then(data => {
+			.then(({StackEvents}) => {
 				const newEvents = [];
 
-				for (const stackEvent of data.StackEvents) {
+				for (const stackEvent of StackEvents) {
 					if (stackEvent.EventId === lastEvent || stackEvent.Timestamp < now)
 						break;
 
@@ -59,11 +73,12 @@ function printEventsAndWaitFor(condition, StackName) {
 				if (new Date() - now > 9e5)
 					process.exit(1);
 
-				const firstItem = data.StackEvents[0];
+				const [firstItem] = StackEvents;
 
 				if (firstItem)
 					lastEvent = firstItem.EventId;
-			}),
+			})
+			.catch(() => clearInterval(interval)),
 		5e3 // 5 seconds
 	);
 
@@ -92,58 +107,31 @@ module.exports = function(gulp, prefix) {
 				Key: lambdaKey,
 				file: 'dist.zip'
 			}
-		].map(obj => s3
+		].map(({Key, file}) => s3
 			.putObject({
 				Bucket,
-				Key: obj.Key,
-				Body: fs.createReadStream(obj.file)
+				Key,
+				Body: fs.createReadStream(file)
 			})
 			.promise()
 		))
 	);
 
+
 	// Deploy the CloudFormation Stack
 	gulp.task(`${prefix}:deployStack`, () => {
 		const Parameters = [
-			{
-				ParameterKey: 'SourceBucketName',
-				ParameterValue: process.env.SOURCE_BUCKET
-			},
-			{
-				ParameterKey: 'DestinationBucketName',
-				ParameterValue: process.env.DESTINATION_BUCKET
-			},
-			{
-				ParameterKey: 'LambdaS3Bucket',
-				ParameterValue: Bucket
-			},
-			{
-				ParameterKey: 'LambdaS3Key',
-				ParameterValue: lambdaKey
-			},
-			{
-				ParameterKey: 'FFmpegArgs',
-				ParameterValue: process.env.FFMPEG_ARGS
-			},
-			{
-				ParameterKey: 'UseGzip',
-				ParameterValue: process.env.USE_GZIP
-			},
-			{
-				ParameterKey: 'MimeTypes',
-				ParameterValue: process.env.MIME_TYPES
-			},
-			{
-				ParameterKey: 'VideoMaxDuration',
-				ParameterValue: process.env.VIDEO_MAX_DURATION
-			}
-		];
-
-		if (process.env.CI)
-			Parameters.push({
-				ParameterKey: 'ExecutionRoleManagedPolicyArn',
-				ParameterValue: process.env.EXECUTION_ROLE_ARN
-			});
+			['SourceBucketName', SOURCE_BUCKET],
+			['DestinationBucketName', DESTINATION_BUCKET],
+			['LambdaS3Bucket', Bucket],
+			['LambdaS3Key', lambdaKey],
+			['FFmpegArgs', FFMPEG_ARGS],
+			['UseGzip', USE_GZIP],
+			['MimeTypes', MIME_TYPES],
+			['VideoMaxDuration', VIDEO_MAX_DURATION],
+			CI ? ['ExecutionRoleManagedPolicyArn', EXECUTION_ROLE_ARN] : undefined
+		]
+			.map(([ParameterKey, ParameterValue]) => ({ParameterKey, ParameterValue}));
 
 		return getCloudFormationOperation(StackName)
 			.then(operation => cloudFormation
@@ -153,11 +141,11 @@ module.exports = function(gulp, prefix) {
 						'CAPABILITY_IAM'
 					],
 					Parameters,
-					RoleARN: process.env.CLOUDFORMATION_ROLE_ARN || undefined,
+					RoleARN: CLOUDFORMATION_ROLE_ARN || undefined,
 					TemplateURL: `https://s3.amazonaws.com/${Bucket}/${templateKey}`
 				})
 				.promise()
-				.then(() => operation === 'createStack' ? 'stackCreateComplete' : 'stackUpdateComplete')
+				.then(() => `stack${operation === 'createStack' ? 'Create' : 'Update'}Complete`)
 			)
 			.then(condition => printEventsAndWaitFor(condition, StackName))
 			.catch(console.error);
@@ -166,7 +154,7 @@ module.exports = function(gulp, prefix) {
 	gulp.task(`${prefix}:deleteStack`, () => cloudFormation
 		.deleteStack({
 			StackName,
-			RoleARN: process.env.CLOUDFORMATION_ROLE_ARN || undefined,
+			RoleARN: CLOUDFORMATION_ROLE_ARN || undefined,
 		})
 		.promise()
 		.then(() => printEventsAndWaitFor('stackDeleteComplete', StackName))
@@ -179,9 +167,9 @@ module.exports = function(gulp, prefix) {
 			LogicalResourceId: 'Lambda'
 		})
 		.promise()
-		.then(data => lambda
+		.then(({StackResourceDetail: PhysicalResourceId}) => lambda
 			.updateFunctionCode({
-				FunctionName: data.StackResourceDetail.PhysicalResourceId,
+				FunctionName: PhysicalResourceId,
 				S3Bucket: Bucket,
 				S3Key: lambdaKey
 			})
@@ -241,9 +229,7 @@ module.exports = function(gulp, prefix) {
 					)
 				)
 					.then(remotes => {
-						for (const remote of remotes) {
-							const url = remote.refs.fetch;
-
+						for (const {refs: {fetch: url}} of remotes) {
 							// Use GitHub user and repo name for StackPrefix
 							if (/github\.com/.test(url)) {
 								return url
@@ -256,11 +242,7 @@ module.exports = function(gulp, prefix) {
 						return packageInfo.name;
 					})
 		])
-			.then(results => {
-				const operation = results[0];
-				const ParameterValue = results[1];
-
-				return cloudFormation[operation]({
+			.then(([operation, ParameterValue]) => cloudFormation[operation]({
 						StackName,
 						Capabilities: [
 							'CAPABILITY_NAMED_IAM'
@@ -282,8 +264,7 @@ module.exports = function(gulp, prefix) {
 						)
 					})
 						.promise()
-						.then(() => operation === 'createStack' ? 'stackCreateComplete' : 'stackUpdateComplete')
-				}
+						.then(() => `stack${operation === 'createStack' ? 'Create' : 'Update'}Complete`)
 			)
 			.then(condition => printEventsAndWaitFor(condition, StackName))
 			.catch(console.error)
@@ -293,10 +274,9 @@ module.exports = function(gulp, prefix) {
 				})
 				.promise()
 			)
-			.then(data => console.log(
-				data.Stacks[0]
-					.Outputs
-					.map(output => `${outputEnvMap.get(output.OutputKey)}=${output.OutputValue}`)
+			.then(([{Stacks: Outputs}]) => console.log(
+				Outputs
+					.map(({OutputKey, OutputValue}) => `${outputEnvMap.get(OutputKey)}=${OutputValue}`)
 					.join('\n')
 			))
 	});

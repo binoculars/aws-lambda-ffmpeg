@@ -14,6 +14,7 @@ const tempDir = process.env['TEMP'] || tmpdir();
 const download = join(tempDir, 'download');
 
 let log = console.log;
+let downloadFunc, uploadFunc;
 
 const extensionRegex = /\.(\w+)$/;
 
@@ -41,15 +42,14 @@ const videoMaxDuration = +VIDEO_MAX_DURATION;
 /**
  * Downloads the file to the local temp directory
  *
- * @param {!function} downloadFunc - The platform library's download function
  * @param {{bucket: !string, key: !string}} sourceLocation - The location of the remote file
  * @returns {Promise}
  */
-function downloadFile(downloadFunc, sourceLocation) {
+function downloadFile({bucket, key}) {
 	return new Promise((resolve, reject) => {
-		log(`Starting download: ${sourceLocation.bucket} / ${sourceLocation.key}`);
+		log(`Starting download: ${bucket} / ${key}`);
 
-		downloadFunc(sourceLocation.bucket, sourceLocation.key)
+		downloadFunc(bucket, key)
 			.on('end', () => {
 				log('Download finished');
 				resolve();
@@ -183,12 +183,11 @@ function encode(filename, gzip, rmFiles) {
 /**
  * Transforms, uploads, and deletes an output file
  *
- * @param {!function} uploadFunc - The function to upload a processed file minus extension)
  * @param {!string} keyPrefix - The filename without the extension
  * @param {!string} filename - A file from the output directory
  * @returns {Promise}
  */
-async function uploadFile(uploadFunc, keyPrefix, filename) {
+async function uploadFile(keyPrefix, filename) {
 	const extension = getExtension(filename);
 	const mimeType = mimeTypes[extension];
 	const fileFullPath = join(outputDir, filename);
@@ -216,15 +215,14 @@ async function uploadFile(uploadFunc, keyPrefix, filename) {
 /**
  * Uploads the output files
  *
- * @param {!function} uploadFunc - The function to upload a processed file
  * @param {!string} keyPrefix - The prefix for the key (filename minus extension)
  * @returns {Promise}
  */
 
-function uploadFiles(uploadFunc, keyPrefix) {
+function uploadFiles(keyPrefix) {
 	return Promise.all(
 		readdirSync(outputDir)
-			.map(filename => uploadFile(uploadFunc, keyPrefix, filename))
+			.map(filename => uploadFile(keyPrefix, filename))
 	);
 }
 
@@ -243,19 +241,22 @@ function uploadFiles(uploadFunc, keyPrefix) {
  */
 export async function main(library, logger, invocation) {
 	log = logger.log;
+	downloadFunc = library.getDownloadStream;
+	uploadFunc = library.uploadToBucket;
+
 	const sourceLocation = library.getFileLocation(invocation.event);
 	const keyPrefix = sourceLocation.key.replace(/\.[^/.]+$/, '');
 
 	let error = null;
 
 	try {
-		await downloadFile(library.getDownloadStream, sourceLocation);
+		await downloadFile(sourceLocation);
 		await checkM3u(download);
 		await ffprobe();
 		await ffmpeg(keyPrefix);
 		await Promise.all([
 			removeFile(download),
-			uploadFiles(library.uploadToBucket, keyPrefix)
+			uploadFiles(keyPrefix)
 		]);
 	} catch (e) {
 		error = e;
