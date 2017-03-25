@@ -27,7 +27,7 @@
   "license": "Unlicense",
   "devDependencies": {
     "ava": "^0.18.2",
-    "aws-sdk-on-lambda": "binoculars/aws-sdk-js-on-lambda",
+    "aws-sdk-js-on-lambda": "binoculars/aws-sdk-js-on-lambda",
     "azure-storage": "^2.1.0",
     "babel-cli": "^6.23.0",
     "babel-preset-env": "^1.2.2",

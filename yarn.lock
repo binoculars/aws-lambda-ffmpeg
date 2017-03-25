@@ -557,7 +557,7 @@ ava@^0.18.2:
     unique-temp-dir "^1.0.0"
     update-notifier "^1.0.0"
 
-aws-sdk-on-lambda@binoculars/aws-sdk-js-on-lambda:
+aws-sdk-js-on-lambda@binoculars/aws-sdk-js-on-lambda:
   version "2.22.0"
   resolved "https://codeload.github.com/binoculars/aws-sdk-js-on-lambda/tar.gz/6ec243ac80769edf1fff8aaa98fb11334ce00c3f"
   dependencies:

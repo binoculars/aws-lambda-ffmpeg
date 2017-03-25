@@ -17,8 +17,6 @@ const buildDir = 'build';
 const filename = path.join(buildDir, 'ffmpeg-build-lambda.tar.gz');
 const releaseUrl = 'https://api.github.com/repos/binoculars/ffmpeg-build-lambda/releases/latest';
 
-const packageJson = require('./package.json');
-
 function request(url, toPipe) {
 	const options = parse(url);
 	options.headers = {
@@ -154,8 +152,7 @@ fs.readdirSync(baseDir)
 						{
 							targets: {
 								node: platform === 'aws' ? 6.10 : 6.9
-							},
-							exclude: packageJson.babel.presets[0][1].exclude
+							}
 						}
 					]
 				],
