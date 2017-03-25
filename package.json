@@ -27,7 +27,7 @@
   "license": "Unlicense",
   "devDependencies": {
     "ava": "^0.18.2",
-    "aws-sdk-js-on-lambda": "binoculars/aws-sdk-js-on-lambda",
+    "aws-sdk-on-lambda": "binoculars/aws-sdk-js-on-lambda",
     "azure-storage": "^2.1.0",
     "babel-cli": "^6.23.0",
     "babel-preset-env": "^1.2.2",
@@ -37,7 +37,7 @@
     "gulp": "^3.9.1",
     "gulp-babel": "^6.1.2",
     "gulp-chmod": "^2.0.0",
-    "gulp-install": "^0.6.0",
+    "gulp-install": "^1.1.0",
     "gulp-json-editor": "^2.2.1",
     "gulp-rename": "^1.2.2",
     "gulp-util": "^3.0.8",
