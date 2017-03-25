@@ -85,10 +85,7 @@ gulp.task('copy-ffmpeg', () => {
 		);
 
 	return gulp
-		.src([
-			'ffmpeg',
-			'ffprobe'
-		], {
+		.src(process.env.CI ? '*' : 'ff*', {
 			cwd: path.join(buildDir, wd)
 		})
 		.pipe(gulp.dest('dist'));

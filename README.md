@@ -81,7 +81,7 @@ export USE_GZIP=false
 export MIME_TYPES='{"png":"image/png","mp4":"video/mp4"}'
 export VIDEO_MAX_DURATION='30'
 # Node version
-nvm use 4.3.2 # This is subject to change
+nvm use 6.10 # This is subject to change
 # Babel-node test script
 node node_modules/babel-cli/bin/babel-node.js test/aws.js
 ```
