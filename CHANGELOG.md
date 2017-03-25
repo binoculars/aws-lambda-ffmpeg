@@ -1,3 +1,10 @@
+# 3.1.0
+- feature: Use node.js 6.10 runtime on lambda and locally
+  - `nvm use 6.10` locally (required)
+- feature: Include FFmpeg license info in CI builds
+- maintenance: Update syntax to use node.js 6 ES2015 features
+- maintenance: Update gulp-install to latest version (1.1.0)
+
 # 3.0.0
 - feature: Use Lambda environment variables instead of config.json (breaking change)
 - feature: Limit columns for logs
