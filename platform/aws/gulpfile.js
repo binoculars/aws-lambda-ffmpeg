@@ -40,7 +40,7 @@ function getCloudFormationOperation(StackName) {
 		})
 		.promise()
 		.then(() => 'updateStack')
-		.catch(() => 'createStack')
+		.catch(() => 'createStack');
 }
 
 function printEventsAndWaitFor(condition, StackName) {
@@ -274,7 +274,7 @@ module.exports = function(gulp, prefix) {
 				})
 				.promise()
 			)
-			.then(([{Stacks: Outputs}]) => console.log(
+			.then(({Stacks: [{Outputs}]}) => console.log(
 				Outputs
 					.map(({OutputKey, OutputValue}) => `${outputEnvMap.get(OutputKey)}=${OutputValue}`)
 					.join('\n')
