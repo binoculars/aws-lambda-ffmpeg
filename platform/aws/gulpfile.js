@@ -131,6 +131,7 @@ module.exports = function(gulp, prefix) {
 			['VideoMaxDuration', VIDEO_MAX_DURATION],
 			CI ? ['ExecutionRoleManagedPolicyArn', EXECUTION_ROLE_ARN] : undefined
 		]
+			.filter(val => val)
 			.map(([ParameterKey, ParameterValue]) => ({ParameterKey, ParameterValue}));
 
 		return getCloudFormationOperation(StackName)
