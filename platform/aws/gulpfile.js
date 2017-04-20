@@ -168,9 +168,9 @@ module.exports = function(gulp, prefix) {
 			LogicalResourceId: 'Lambda'
 		})
 		.promise()
-		.then(({StackResourceDetail: PhysicalResourceId}) => lambda
+		.then(({StackResourceDetail: {PhysicalResourceId: FunctionName}}) => lambda
 			.updateFunctionCode({
-				FunctionName: PhysicalResourceId,
+				FunctionName,
 				S3Bucket: Bucket,
 				S3Key: lambdaKey
 			})
