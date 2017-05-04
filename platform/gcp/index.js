@@ -5,21 +5,24 @@ import * as lib from './lib.js';
 /**
  * The main Google Cloud Function
  * 
- * @param {Object} context - The event context
- * @param {Object} data - The event data
+ * @param {Object} event - The event as defined at https://cloud.google.com/functions/docs/writing/background
+ * @param {Function} callback - The callback, conforms to the errback convention
  */
-export function entryPoint(context, data) {
-	console.log(`Reading options from data:\n${inspect(data, {depth: 5})}`);
+export function entryPoint(event, callback) {
+	console.log(`Reading options from data:\n${inspect(event, {depth: 5})}`);
 
-	main(lib, console, {
-		event: data,
-		context: context,
-		// Shim
-		callback: (error, result) => {
-			if (error)
-				context.failure(error);
-			else
-				context.success(result);
-		}
-	});
+    const file = event.data;
+    const isDelete = file.resourceState === 'not_exists';
+
+    if (isDelete) {
+        console.log(`File ${file.name} deleted.`);
+        callback();
+    } else {
+        console.log(`File ${file.name} uploaded.`);
+        main(lib, console, {
+            event: file,
+            callback: callback
+        });
+    }
+
 }

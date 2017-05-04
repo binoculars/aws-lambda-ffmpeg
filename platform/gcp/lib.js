@@ -25,10 +25,10 @@ export function getDownloadStream(bucket, key) {
  * @param {!string} event.name
  * @returns {{bucket: {string}, key: {string}}}
  */
-export function getFileLocation(event) {
+export function getFileLocation(file) {
 	return {
-		bucket: event.bucket,
-		key: event.name
+		bucket: file.bucket,
+		key: file.name
 	};
 }
 
