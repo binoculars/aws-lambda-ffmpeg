@@ -40,7 +40,7 @@ function getCloudFormationOperation(StackName) {
 		})
 		.promise()
 		.then(() => 'updateStack')
-		.catch(() => 'createStack')
+		.catch(() => 'createStack');
 }
 
 function printEventsAndWaitFor(condition, StackName) {
@@ -131,6 +131,7 @@ module.exports = function(gulp, prefix) {
 			['VideoMaxDuration', VIDEO_MAX_DURATION],
 			CI ? ['ExecutionRoleManagedPolicyArn', EXECUTION_ROLE_ARN] : undefined
 		]
+			.filter(val => val)
 			.map(([ParameterKey, ParameterValue]) => ({ParameterKey, ParameterValue}));
 
 		return getCloudFormationOperation(StackName)
@@ -167,9 +168,9 @@ module.exports = function(gulp, prefix) {
 			LogicalResourceId: 'Lambda'
 		})
 		.promise()
-		.then(({StackResourceDetail: PhysicalResourceId}) => lambda
+		.then(({StackResourceDetail: {PhysicalResourceId: FunctionName}}) => lambda
 			.updateFunctionCode({
-				FunctionName: PhysicalResourceId,
+				FunctionName,
 				S3Bucket: Bucket,
 				S3Key: lambdaKey
 			})
@@ -274,7 +275,7 @@ module.exports = function(gulp, prefix) {
 				})
 				.promise()
 			)
-			.then(([{Stacks: Outputs}]) => console.log(
+			.then(({Stacks: [{Outputs}]}) => console.log(
 				Outputs
 					.map(({OutputKey, OutputValue}) => `${outputEnvMap.get(OutputKey)}=${OutputValue}`)
 					.join('\n')
