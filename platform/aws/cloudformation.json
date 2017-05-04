@@ -60,7 +60,7 @@
 		"HasNoDestinationBucketName": {
 			"Fn::Equals": [
 				{
-					"Ref": "SourceBucketName"
+					"Ref": "DestinationBucketName"
 				},
 				""
 			]

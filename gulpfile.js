@@ -17,7 +17,7 @@ const buildDir = 'build';
 const filename = path.join(buildDir, 'ffmpeg-build-lambda.tar.gz');
 const releaseUrl = 'https://api.github.com/repos/binoculars/ffmpeg-build-lambda/releases/latest';
 
-function request(url, toPipe) {
+function request(url, toPipe, retries = 0) {
 	const options = parse(url);
 	options.headers = {
 		'User-Agent': 'node'
@@ -30,6 +30,22 @@ function request(url, toPipe) {
 			if (statusCode < 200 || statusCode > 299) {
 				if (statusCode === 302)
 					return request(response.headers.location, toPipe);
+
+				if (statusCode === 403 && retries < 3)
+					return new Promise((resolve, reject) => {
+						const tryCount = retries + 1;
+
+						console.log(`Request failed, retrying ${tryCount} of 3`);
+
+						setTimeout(
+							() => {
+								return request(url, toPipe, tryCount)
+									.then(resolve)
+									.catch(reject);
+							},
+							3e3
+						);
+					});
 
 				return reject(new Error('Failed to load page, status code: ' + response.statusCode));
 			}
