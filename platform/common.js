@@ -1,7 +1,5 @@
 'use strict';
 
-process.env['NODE_ENV'] = 'production';
-
 import {spawn, execFile} from 'child_process';
 import {unlink, createReadStream, createWriteStream, readdirSync, existsSync, mkdirSync} from 'fs';
 import {createGzip, Z_BEST_COMPRESSION} from 'zlib';
@@ -27,13 +25,11 @@ const outputDir = join(tempDir, 'outputs');
 if (!existsSync(outputDir))
 	mkdirSync(outputDir);
 
-const {
-	DESTINATION_BUCKET,
-	FFMPEG_ARGS,
-	USE_GZIP,
-	MIME_TYPES,
-	VIDEO_MAX_DURATION,
-} = process.env;
+const DESTINATION_BUCKET = process.env.DESTINATION_BUCKET;
+const FFMPEG_ARGS = process.env.FFMPEG_ARGS;
+const USE_GZIP = process.env.USE_GZIP;
+const MIME_TYPES = process.env.MIME_TYPES;
+const VIDEO_MAX_DURATION = process.env.VIDEO_MAX_DURATION;
 
 const mimeTypes = JSON.parse(MIME_TYPES);
 const useGzip = USE_GZIP === 'true';
@@ -62,9 +58,10 @@ function downloadFile({bucket, key}) {
 /**
  * Runs FFprobe and ensures that the input file has a valid stream and meets the maximum duration threshold.
  *
+ * @param {String} codeLocation - The path where the ffprobe binary lives.
  * @returns {Promise}
  */
-function ffprobe() {
+function ffprobe(codeLocation) {
 	log('Starting FFprobe');
 
 	return new Promise((resolve, reject) => {
@@ -99,7 +96,7 @@ function ffprobe() {
 			}
 		};
 
-		execFile('ffprobe', args, opts, cb)
+		execFile(join(codeLocation, 'ffprobe'), args, opts, cb)
 			.on('error', reject);
 	});
 }
@@ -107,10 +104,11 @@ function ffprobe() {
 /**
  * Runs the FFmpeg executable
  *
+ * @param {String} codeLocation - The path where the ffprobe binary lives.
  * @param {string} keyPrefix - The prefix for the key (filename minus extension)
  * @returns {Promise}
  */
-function ffmpeg(keyPrefix) {
+function ffmpeg(codeLocation, keyPrefix) {
 	log('Starting FFmpeg');
 
 	return new Promise((resolve, reject) => {
@@ -126,7 +124,7 @@ function ffmpeg(keyPrefix) {
 			cwd: outputDir
 		};
 		
-		spawn('ffmpeg', args, opts)
+		spawn(join(codeLocation, 'ffmpeg'), args, opts)
 			.on('message', msg => log(msg))
 			.on('error', reject)
 			.on('close', resolve);
@@ -252,8 +250,8 @@ export async function main(library, logger, invocation) {
 	try {
 		await downloadFile(sourceLocation);
 		await checkM3u(download);
-		await ffprobe();
-		await ffmpeg(keyPrefix);
+		await ffprobe(library.getCodeLocation());
+		await ffmpeg(library.getCodeLocation(), keyPrefix);
 		await Promise.all([
 			removeFile(download),
 			uploadFiles(keyPrefix)

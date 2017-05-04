@@ -18,7 +18,7 @@ module.exports = function(gulp, prefix) {
 		return gulp.src('./package.json')
 			.pipe(jeditor(function(json) {
 				json.main = './gcp/index.js';
-				json.dependencies['google-cloud'] = packageInfo.devDependencies['google-cloud'];
+				json.dependencies['@google-cloud/storage'] = packageInfo.devDependencies['@google-cloud/storage'];
 				delete json.scripts;
 				delete json.devDependencies;
 				return json;

@@ -159,6 +159,7 @@ fs.readdirSync(baseDir)
 				cwd: baseDir
 			})
 			.pipe(babel({
+                plugins: ["transform-inline-environment-variables"],
 				presets: [
 					[
 						'env',
