@@ -1,5 +1,3 @@
-process.env['PATH'] += ':' + process.env['CODE_LOCATION'];
-process.env['GCLOUD_PROJECT'] = process.env['GCLOUD_PROJECT'] || process.env['GCP_PROJECT'];
 import storage from '@google-cloud/storage';
 
 const gcs = storage();
@@ -32,6 +30,16 @@ export function getFileLocation(event) {
 		bucket: event.bucket,
 		key: event.name
 	};
+}
+
+/**
+ * Get the path of the ffmpeg/ffprobe binaries within the GCF environment
+ *
+ * @returns {string}
+ */
+export function getCodeLocation() {
+    const { CODE_LOCATION } = process.env;
+    return CODE_LOCATION;
 }
 
 /**
