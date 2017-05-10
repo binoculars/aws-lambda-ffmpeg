@@ -3,9 +3,8 @@
   "version": "3.1.0",
   "private": true,
   "description": "AWS Lambda function to resize video and generate a thumbnail",
-  "engines-strict": true,
   "engines": {
-    "node": ">=4.3",
+    "node": ">=6.10",
     "npm": ">=3"
   },
   "main": "index.js",
