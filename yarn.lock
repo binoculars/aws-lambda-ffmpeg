@@ -145,6 +145,14 @@
     propprop "^0.3.0"
     split-array-stream "^1.0.0"
 
+"@google-cloud/dlp@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@google-cloud/dlp/-/dlp-0.1.0.tgz#2fdeff3d51fbfabc83f3022261f2268c774e79f3"
+  dependencies:
+    extend "^3.0.0"
+    google-gax "^0.13.2"
+    google-proto-files "^0.12.0"
+
 "@google-cloud/dns@^0.6.0":
   version "0.6.0"
   resolved "https://registry.yarnpkg.com/@google-cloud/dns/-/dns-0.6.0.tgz#a3b9c0184496a52c815beb2b435628e54c60962b"
@@ -209,16 +217,16 @@
     string-format-obj "^1.0.0"
     through2 "^2.0.0"
 
-"@google-cloud/pubsub@^0.12.0":
-  version "0.12.0"
-  resolved "https://registry.yarnpkg.com/@google-cloud/pubsub/-/pubsub-0.12.0.tgz#489e51d9cf8a043b83b1e79f76fc885b3bfae2b0"
+"@google-cloud/pubsub@^0.13.0":
+  version "0.13.0"
+  resolved "https://registry.yarnpkg.com/@google-cloud/pubsub/-/pubsub-0.13.0.tgz#a6446d1eafab14c33b3e106561439a0f6d1bfb95"
   dependencies:
     "@google-cloud/common" "^0.13.0"
     "@google-cloud/common-grpc" "^0.3.1"
     arrify "^1.0.0"
     extend "^3.0.0"
     google-gax "^0.13.0"
-    google-proto-files "^0.11.0"
+    google-proto-files "^0.12.0"
     is "^3.0.1"
     modelo "^4.2.0"
     propprop "^0.3.0"
@@ -304,6 +312,14 @@
     is "^3.0.1"
     is-html "^1.0.0"
     propprop "^0.3.0"
+
+"@google-cloud/video-intelligence@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@google-cloud/video-intelligence/-/video-intelligence-0.1.0.tgz#1675ceebc1923130ed3f1d2a0f9ffe4552e49896"
+  dependencies:
+    extend "^3.0.0"
+    google-gax "^0.13.2"
+    google-proto-files "^0.12.0"
 
 "@google-cloud/vision@^0.11.0":
   version "0.11.0"
@@ -2331,25 +2347,27 @@ google-auto-auth@^0.6.0:
     object-assign "^3.0.0"
     request "^2.79.0"
 
-google-cloud@^0.54.0:
-  version "0.54.0"
-  resolved "https://registry.yarnpkg.com/google-cloud/-/google-cloud-0.54.0.tgz#bb00b979e4594bdc19f9caac3fe039658cfeae21"
+google-cloud@^0.55.0:
+  version "0.55.0"
+  resolved "https://registry.yarnpkg.com/google-cloud/-/google-cloud-0.55.0.tgz#1ee34fd3b2e4dadeaa1857b0802e88a6545be69f"
   dependencies:
     "@google-cloud/bigquery" "^0.9.0"
     "@google-cloud/bigtable" "^0.10.0"
     "@google-cloud/compute" "^0.7.0"
     "@google-cloud/datastore" "^1.0.0"
+    "@google-cloud/dlp" "^0.1.0"
     "@google-cloud/dns" "^0.6.0"
     "@google-cloud/language" "^0.10.0"
     "@google-cloud/logging" "^1.0.0"
     "@google-cloud/monitoring" "^0.2.0"
     "@google-cloud/prediction" "^0.6.0"
-    "@google-cloud/pubsub" "^0.12.0"
+    "@google-cloud/pubsub" "^0.13.0"
     "@google-cloud/resource" "^0.7.0"
     "@google-cloud/spanner" "^0.4.0"
     "@google-cloud/speech" "^0.9.0"
     "@google-cloud/storage" "^1.0.0"
     "@google-cloud/translate" "^0.8.0"
+    "@google-cloud/video-intelligence" "^0.1.0"
     "@google-cloud/vision" "^0.11.0"
     extend "^3.0.0"
 
@@ -2365,7 +2383,7 @@ google-gax@^0.12.0, google-gax@^0.12.1, google-gax@^0.12.3:
     process-nextick-args "^1.0.7"
     readable-stream "^2.2.2"
 
-google-gax@^0.13.0:
+google-gax@^0.13.0, google-gax@^0.13.2:
   version "0.13.2"
   resolved "https://registry.yarnpkg.com/google-gax/-/google-gax-0.13.2.tgz#61a7b55fad465b17d3680f88070b2e419131e98e"
   dependencies:
@@ -4279,7 +4297,7 @@ request@2.76.0:
     tough-cookie "~2.3.0"
     tunnel-agent "~0.4.1"
 
-request@^2.61.0, request@^2.72.0, request@^2.79.0, request@^2.81.0:
+request@^2.61.0, request@^2.72.0, request@^2.74.0, request@^2.79.0, request@^2.81.0:
   version "2.81.0"
   resolved "https://registry.yarnpkg.com/request/-/request-2.81.0.tgz#c6928946a0e06c5f8d6f8a9333469ffda46298a0"
   dependencies:
@@ -4306,7 +4324,7 @@ request@^2.61.0, request@^2.72.0, request@^2.79.0, request@^2.81.0:
     tunnel-agent "^0.6.0"
     uuid "^3.0.0"
 
-request@^2.74.0, request@~2.74.0:
+request@~2.74.0:
   version "2.74.0"
   resolved "https://registry.yarnpkg.com/request/-/request-2.74.0.tgz#7693ca768bbb0ea5c8ce08c084a45efa05b892ab"
   dependencies:
@@ -4862,7 +4880,7 @@ util-deprecate@~1.0.1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/util-deprecate/-/util-deprecate-1.0.2.tgz#450d4dc9fa70de732762fbd2d4a28981419a0ccf"
 
-uuid@3.0.0:
+uuid@3.0.0, uuid@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.0.0.tgz#6728fc0459c450d796a99c31837569bdf672d728"
 
@@ -4870,7 +4888,7 @@ uuid@^2.0.1:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-2.0.3.tgz#67e2e863797215530dff318e5bf9dcebfd47b21a"
 
-uuid@^3.0.0, uuid@^3.0.1:
+uuid@^3.0.1:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.0.1.tgz#6544bba2dfda8c1cf17e629a3a305e2bb1fee6c1"
 
