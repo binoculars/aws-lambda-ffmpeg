@@ -179,7 +179,7 @@ module.exports = function(gulp, prefix) {
 	);
 
 	// Builds the function and uploads
-	gulp.task(`${prefix}:build-upload`, cb => runSequence(
+	gulp.task(`${prefix}:build-upload`, () => runSequence(
 		'clean',
 		'download-ffmpeg',
 		`${prefix}:source`,
@@ -187,22 +187,19 @@ module.exports = function(gulp, prefix) {
 		'untar-ffmpeg',
 		'copy-ffmpeg',
 		'zip',
-		`${prefix}:upload`,
-		cb
+		`${prefix}:upload`
 	));
 
 	// For an already created stack
-	gulp.task(`${prefix}:update`, cb => runSequence(
+	gulp.task(`${prefix}:update`, () => runSequence(
 		`${prefix}:build-upload`,
-		`${prefix}:updateCode`,
-		cb
+		`${prefix}:updateCode`
 	));
 
 	// For a new stack (or you change cloudformation.json)
-	gulp.task(`${prefix}:default`, cb => runSequence(
+	gulp.task(`${prefix}:default`, () => runSequence(
 		`${prefix}:build-upload`,
-		`${prefix}:deployStack`,
-		cb
+		`${prefix}:deployStack`
 	));
 
 	const ciStackName = `CI-for-${StackName}`;

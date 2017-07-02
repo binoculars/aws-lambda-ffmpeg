@@ -73,9 +73,7 @@ function stackEventToRow({Timestamp, ResourceStatus, ResourceType, LogicalResour
 		LogicalResourceId
 	].map((val, i) => val.match(new RegExp(`.{1,${columns[i]}}`, 'g')));
 
-	const style = chalk.styles[
-		getResourceStatusColor(ResourceStatus)
-	];
+	const color = getResourceStatusColor(ResourceStatus);
 
 	const maxLines = cells
 		.reduce((acc, val) => val.length > acc ? val.length : acc, '');
@@ -87,11 +85,9 @@ function stackEventToRow({Timestamp, ResourceStatus, ResourceType, LogicalResour
 
 		for (let j = 0; j < cells.length; j++) {
 			const isColored = j === 1;
-			const open = isColored ? style.open : '';
-			const close = isColored ? style.close : '';
 			const value = pad(cells[j][i] || '', columns[j]);
 
-			line.push(`${open}${value}${close}`);
+			line.push(isColored ? chalk[color](value) : value);
 		}
 
 		lines.push(cellsToRow(line));
