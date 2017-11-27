@@ -1,3 +1,14 @@
+# 3.2.0
+- Travis
+  - Install latest yarn
+  - Update caching
+  - set FORCE_COLOR=1
+- Update README for gulp task `aws:create-cfn-bucket`
+- Retry 3 times for FFmpeg download
+- Update devDependencies
+- CFN template fix
+- Fixes for the CI logger
+
 # 3.1.0
 - feature: Use node.js 6.10 runtime on lambda and locally
   - `nvm use 6.10` locally (required)
