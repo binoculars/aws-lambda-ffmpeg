@@ -164,7 +164,16 @@ fs.readdirSync(baseDir)
 						'env',
 						{
 							targets: {
-								node: platform === 'aws' ? 6.10 : 6.9
+								node: (() => {
+									switch(platform) {
+										case 'aws':
+											return '6.10';
+										case 'gcp':
+											return '6.11';
+										default:
+											return 'current';
+									}
+								})()
 							}
 						}
 					]
