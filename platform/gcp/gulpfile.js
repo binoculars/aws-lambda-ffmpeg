@@ -46,8 +46,8 @@ module.exports = function(gulp, prefix) {
 				'deploy',
 				'ffmpeg',
 				'--entry-point', 'entryPoint',
-				'--bucket', config.functionBucket,
-				'--trigger-gs-uri', config.sourceBucket
+				'--stage-bucket', config.functionBucket,
+				'--trigger-bucket', config.sourceBucket
 			],
 			{
 				cwd: './dist',

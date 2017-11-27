@@ -89,8 +89,10 @@ node node_modules/babel-cli/bin/babel-node.js test/aws.js
 ### Gulp
 
 #### Task: `aws:create-cfn-bucket`
-Creates the CloudFormation for your CloudFormation template and Lambda function code. **Run this once**, the result of
-this goes in environment variable, `CFN_S3_BUCKET`
+Creates the CloudFormation for your CloudFormation template and Lambda function code. **Run this once**. Set the `CFN_S3_BUCKET` environment variable to the name of the bucket you want to create.
+```bash
+CFN_S3_BUCKET=cloudformation-bucket gulp aws:create-cfn-bucket
+```
 
 #### Environment Settings
 The following environment variables must be set prior to using the rest of the gulp commands

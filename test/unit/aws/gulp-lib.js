@@ -14,10 +14,8 @@ test('A one-line event', t => {
 	};
 
 	const actual = stackEventToRow(stackEvent);
-
-	const {open, close} = chalk.styles.yellow;
 	const expected = `
-│ 1970-01-01T00:00:00.000Z │ ${open}CREATE_IN_PROGRESS${close} │ AWS::CloudFormation::Stack │ username-aws-lambda-ffmpeg-tag-v240   │
+│ 1970-01-01T00:00:00.000Z │ ${chalk.yellow('CREATE_IN_PROGRESS')} │ AWS::CloudFormation::Stack │ username-aws-lambda-ffmpeg-tag-v240   │
 `.trim();
 
 	t.is(actual, expected);
@@ -35,12 +33,10 @@ test('A multi-line event', t => {
 	};
 
 	const actual = stackEventToRow(stackEvent);
-
-	const {open, close} = chalk.styles.red;
 	const expected = `
-│ 1970-01-01T00:00:00.000Z │ ${open}UPDATE_ROLLBACK_CO${close} │ AWS::CloudFormation::Stack │ username-aws-lambda-ffmpeg-branch-mas │
-│                          │ ${open}MPLETE_CLEANUP_IN_${close} │                            │ ter                                   │
-│                          │ ${open}PROGRESS          ${close} │                            │                                       │
+│ 1970-01-01T00:00:00.000Z │ ${chalk.red('UPDATE_ROLLBACK_CO')} │ AWS::CloudFormation::Stack │ username-aws-lambda-ffmpeg-branch-mas │
+│                          │ ${chalk.red('MPLETE_CLEANUP_IN_')} │                            │ ter                                   │
+│                          │ ${chalk.red('PROGRESS          ')} │                            │                                       │
 `.trim();
 
 	t.is(actual, expected);

@@ -40,7 +40,7 @@ function getCloudFormationOperation(StackName) {
 		})
 		.promise()
 		.then(() => 'updateStack')
-		.catch(() => 'createStack')
+		.catch(() => 'createStack');
 }
 
 function printEventsAndWaitFor(condition, StackName) {
@@ -131,6 +131,7 @@ module.exports = function(gulp, prefix) {
 			['VideoMaxDuration', VIDEO_MAX_DURATION],
 			CI ? ['ExecutionRoleManagedPolicyArn', EXECUTION_ROLE_ARN] : undefined
 		]
+			.filter(val => val)
 			.map(([ParameterKey, ParameterValue]) => ({ParameterKey, ParameterValue}));
 
 		return getCloudFormationOperation(StackName)
@@ -167,9 +168,9 @@ module.exports = function(gulp, prefix) {
 			LogicalResourceId: 'Lambda'
 		})
 		.promise()
-		.then(({StackResourceDetail: PhysicalResourceId}) => lambda
+		.then(({StackResourceDetail: {PhysicalResourceId: FunctionName}}) => lambda
 			.updateFunctionCode({
-				FunctionName: PhysicalResourceId,
+				FunctionName,
 				S3Bucket: Bucket,
 				S3Key: lambdaKey
 			})
@@ -178,7 +179,7 @@ module.exports = function(gulp, prefix) {
 	);
 
 	// Builds the function and uploads
-	gulp.task(`${prefix}:build-upload`, cb => runSequence(
+	gulp.task(`${prefix}:build-upload`, () => runSequence(
 		'clean',
 		'download-ffmpeg',
 		`${prefix}:source`,
@@ -186,22 +187,19 @@ module.exports = function(gulp, prefix) {
 		'untar-ffmpeg',
 		'copy-ffmpeg',
 		'zip',
-		`${prefix}:upload`,
-		cb
+		`${prefix}:upload`
 	));
 
 	// For an already created stack
-	gulp.task(`${prefix}:update`, cb => runSequence(
+	gulp.task(`${prefix}:update`, () => runSequence(
 		`${prefix}:build-upload`,
-		`${prefix}:updateCode`,
-		cb
+		`${prefix}:updateCode`
 	));
 
 	// For a new stack (or you change cloudformation.json)
-	gulp.task(`${prefix}:default`, cb => runSequence(
+	gulp.task(`${prefix}:default`, () => runSequence(
 		`${prefix}:build-upload`,
-		`${prefix}:deployStack`,
-		cb
+		`${prefix}:deployStack`
 	));
 
 	const ciStackName = `CI-for-${StackName}`;
@@ -274,7 +272,7 @@ module.exports = function(gulp, prefix) {
 				})
 				.promise()
 			)
-			.then(([{Stacks: Outputs}]) => console.log(
+			.then(({Stacks: [{Outputs}]}) => console.log(
 				Outputs
 					.map(({OutputKey, OutputValue}) => `${outputEnvMap.get(OutputKey)}=${OutputValue}`)
 					.join('\n')

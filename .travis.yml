@@ -2,10 +2,9 @@ language: node_js
 node_js: lts/boron
 sudo: false
 dist: trusty
-cache:
-  directories:
-  - node_modules
-  - $HOME/.cache
+cache: yarn
+env:
+- FORCE_COLOR=1
 before_install:
 - |
   if [ -n "$TRAVIS_BRANCH" ]; then
@@ -26,6 +25,7 @@ before_install:
   export USE_GZIP=false
   export MIME_TYPES='{"png":"image/png","mp4":"video/mp4"}'
   export VIDEO_MAX_DURATION='30'
+- curl -o- -L https://yarnpkg.com/install.sh | bash
 before_script:
 - yarn global add gulp
 script:
