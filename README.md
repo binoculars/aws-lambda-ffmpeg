@@ -31,7 +31,7 @@ The different platforms have different naming conventions for their services. To
 - [ ] Microsoft Azure (msa) Functions (Still some work to do here)
 
 # Setup
-1. Install node.js, preferably through [nvm](/creationix/nvm). Each platform service uses a specific version of Node.js.
+1. Install node.js, preferably through [nvm](https://github.com/creationix/nvm). Each platform service uses a specific version of Node.js.
 1. Clone this repo `git clone ...`
 1. Run `npm install`
 1. Create your function code's storage location (or choose an existing one)
