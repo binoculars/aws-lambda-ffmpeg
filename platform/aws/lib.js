@@ -51,15 +51,24 @@ export function getFileLocation({Records: [{s3: {bucket, object}}]}) {
  * @returns Promise
  */
 export function uploadToBucket(Bucket, Key, Body, contentEncoding, ContentType) {
+	const config = {
+        Bucket,
+        Key,
+        Body,
+        ContentType,
+        ContentEncoding: contentEncoding || undefined,
+        CacheControl: 'max-age=31536000'
+    };
+
+    if (process.env.SSE) {
+        config.ServerSideEncryption = process.env.SSE;
+    }
+    if (process.env.SSE_KEY_ID) {
+        config.SSEKMSKeyId = process.env.SSE_KEY_ID;
+    }
+
 	return s3
-		.putObject({
-			Bucket,
-			Key,
-			Body,
-			ContentType,
-			ContentEncoding: contentEncoding || undefined,
-			CacheControl: 'max-age=31536000' // 1 year (60 * 60 * 24 * 365)
-		})
+		.putObject(config)
 		.on('httpUploadProgress', ({loaded, total}) => {
 			console.log(ContentType, 'Progress:', loaded, '/', total, `${Math.round(100 * loaded / total)}%`);
 		})

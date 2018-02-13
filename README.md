@@ -80,6 +80,8 @@ export FFMPEG_ARGS=$'-c:a copy -vf scale=\'min(320\\,iw):-2\' -movflags +faststa
 export USE_GZIP=false
 export MIME_TYPES='{"png":"image/png","mp4":"video/mp4"}'
 export VIDEO_MAX_DURATION='30'
+export SSE="aws:kms" # or "aes256" if you want to put the video into an encrypted bucket
+export SSE_KEY_ID="some kms key id" # if SSE="aws:kms" you must provide this key id too
 # Node version
 nvm use 6.10 # This is subject to change
 # Babel-node test script
