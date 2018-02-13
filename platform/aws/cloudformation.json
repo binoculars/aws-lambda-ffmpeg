@@ -46,6 +46,16 @@
 			"Type": "String",
 			"Default": "",
 			"Description": "ARN of the external execution role policy"
+		},
+		"ServerSideEncryptionMethod": {
+			"Type": "String",
+			"Default": "",
+			"Description": "Serverside Encryption 'aws:kms' or 'aes-256'"
+		},
+		"ServerSideEncryptionKey": {
+			"Type": "String",
+			"Default": "",
+			"Description": "Serverside Encryption key id if used SSE='aws:kms'"
 		}
 	},
 	"Conditions": {
@@ -205,6 +215,12 @@
 						},
 						"VIDEO_MAX_DURATION": {
 							"Ref": "VideoMaxDuration"
+						},
+						"SSE": {
+							"Ref": "ServerSideEncryptionMethod"
+						},
+						"SSE_KEY_ID": {
+							"Ref": "ServerSideEncryptionKey"
 						}
 					}
 				},
