@@ -42,7 +42,7 @@
     "gulp-util": "^3.0.8",
     "gulp-zip": "^4.0.0",
     "run-sequence": "^2.0.0",
-    "simple-git": "^1.73.0"
+    "simple-git": "^1.105.0"
   },
   "dependencies": {},
   "babel": {
