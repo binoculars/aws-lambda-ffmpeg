@@ -37,7 +37,7 @@
     "gulp-babel": "^7.0.0",
     "gulp-chmod": "^2.0.0",
     "gulp-install": "^1.1.0",
-    "gulp-json-editor": "^2.2.1",
+    "gulp-json-editor": "2.4.2",
     "gulp-rename": "^1.2.2",
     "gulp-util": "^3.0.8",
     "gulp-zip": "^4.0.0",
