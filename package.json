@@ -33,7 +33,7 @@
     "chalk": "^2.0.1",
     "del": "^3.0.0",
     "google-cloud": "^0.57.0",
-    "gulp": "^3.9.1",
+    "gulp": "^4.0.1",
     "gulp-babel": "^7.0.0",
     "gulp-chmod": "^2.0.0",
     "gulp-install": "^1.1.0",
