@@ -31,7 +31,7 @@
     "babel-cli": "^6.24.1",
     "babel-preset-env": "^1.6.1",
     "chalk": "^2.0.1",
-    "del": "^3.0.0",
+    "del": "^4.1.1",
     "google-cloud": "^0.57.0",
     "gulp": "^3.9.1",
     "gulp-babel": "^7.0.0",
