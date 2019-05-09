@@ -129,7 +129,13 @@ function ffmpeg(keyPrefix) {
 		spawn('ffmpeg', args, opts)
 			.on('message', msg => log(msg))
 			.on('error', reject)
-			.on('close', resolve);
+			.on('close', (code, signal) => {
+                if (code === 0) {
+                    resolve();
+                } else {
+                    reject(new Error(`bad ffmpeg exit code: ${code}`));
+                }
+            });
 	});
 }
 
