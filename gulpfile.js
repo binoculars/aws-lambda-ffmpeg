@@ -167,7 +167,7 @@ fs.readdirSync(baseDir)
 								node: (() => {
 									switch(platform) {
 										case 'aws':
-											return '6.10';
+											return '8.10';
 										case 'gcp':
 											return '6.11';
 										default:
