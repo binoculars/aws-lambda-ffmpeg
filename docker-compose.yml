@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  localstack:
+    image: localstack/localstack:0.11.2@sha256:f3c62976f864b0087226991fe111e19122346f0f601c55eb2491190159dd07f9
+    container_name: localstack
+    environment:
+      DATA_DIR: /tmp/localstack
+      PORT_WEB_UI: 8081
+      SERVICES: s3
+      USE_SSL: "0"
+    ports:
+      - 4566:4566
+      - ${PORT_WEB_UI-8081}:${PORT_WEB_UI-8081}
+    volumes:
+      - "${LOCALSTACK_DATA_VOL:-localstack_data_vol}:/tmp/localstack"
+
+  lambda:
+    build:
+      context: ./lambda/
+      target: lambda
+    container_name: web
+    image: ${REGISTRY_URI:-ghcr.io}/${REPOSITORY_NAME:-binoculars/aws-lambda-ffmepg}:${NAMED_TAG:-latest}
+
+volumes:
+  localstack_data_vol:
+    external: false

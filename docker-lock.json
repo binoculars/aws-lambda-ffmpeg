@@ -1,0 +1,33 @@
+{
+	"composefiles": {
+		"docker-compose.yml": [
+			{
+				"name": "node",
+				"tag": "14-alpine",
+				"digest": "ed51af876dd7932ce5c1e3b16c2e83a3f58419d824e366de1f7b00f40c848c40",
+				"dockerfile": "lambda/Dockerfile",
+				"service": "lambda"
+			},
+			{
+				"name": "jrottenberg/ffmpeg",
+				"tag": "4.1-scratch",
+				"digest": "01165bc62cccae0b328ece9edc23131645979f7e9d0603c7c2a9438d00dd1c59",
+				"dockerfile": "lambda/Dockerfile",
+				"service": "lambda"
+			},
+			{
+				"name": "public.ecr.aws/lambda/nodejs",
+				"tag": "14",
+				"digest": "f27d6dd719eb33377b43c209f9354d3ecedc11c6f7d6c8af34c09413fd19034f",
+				"dockerfile": "lambda/Dockerfile",
+				"service": "lambda"
+			},
+			{
+				"name": "localstack/localstack",
+				"tag": "0.11.2",
+				"digest": "f3c62976f864b0087226991fe111e19122346f0f601c55eb2491190159dd07f9",
+				"service": "localstack"
+			}
+		]
+	}
+}

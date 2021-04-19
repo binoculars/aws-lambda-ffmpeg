@@ -1,9 +1,8 @@
-> An ~~[AWS Lambda](http://aws.amazon.com/lambda/)~~ Event-driven function that resizes videos and outputs thumbnails using [FFmpeg](https://www.ffmpeg.org/). This function is meant for short-duration videos. If you need to transcode long videos, check out [AWS Elastic Transcoder](http://aws.amazon.com/elastictranscoder/).
+> An [AWS Lambda](http://aws.amazon.com/lambda/) function that resizes videos and outputs thumbnails using [FFmpeg](https://www.ffmpeg.org/). This function is meant for short-duration videos. If you need to transcode long videos, check out [AWS Elastic Transcoder](http://aws.amazon.com/elastictranscoder/).
 
 [![Dependency Status](https://david-dm.org/binoculars/aws-lambda-ffmpeg.svg)](https://david-dm.org/binoculars/aws-lambda-ffmpeg)
 [![devDependency Status](https://david-dm.org/binoculars/aws-lambda-ffmpeg/dev-status.svg)](https://david-dm.org/binoculars/aws-lambda-ffmpeg#info=devDependencies)
 [![Known Vulnerabilities](https://snyk.io/test/github/binoculars/aws-lambda-ffmpeg/badge.svg)](https://snyk.io/test/github/binoculars/aws-lambda-ffmpeg)
-[![Greenkeeper badge](https://badges.greenkeeper.io/binoculars/aws-lambda-ffmpeg.svg)](https://greenkeeper.io/)
 
 - Master: [![Build Status](https://travis-ci.org/binoculars/aws-lambda-ffmpeg.svg?branch=master)](https://travis-ci.org/binoculars/aws-lambda-ffmpeg)
 - Develop: [![Build Status](https://travis-ci.org/binoculars/aws-lambda-ffmpeg.svg?branch=develop)](https://travis-ci.org/binoculars/aws-lambda-ffmpeg)
@@ -23,12 +22,6 @@ The different platforms have different naming conventions for their services. To
 1. Streams the video through FFmpeg
 1. Outputs a scaled video file and a thumbnail image
 1. Uploads both files to the destination bucket
-
-# Supported Platforms
-- [x] Amazon Web Services (aws) Lambda
-- [x] Google Cloud Platform (gcp) Cloud Functions (Alpha)
-- [ ] IBM (ibm) OpenWhisk (Not started)
-- [ ] Microsoft Azure (msa) Functions (Still some work to do here)
 
 # Setup
 1. Install node.js, preferably through [nvm](https://github.com/creationix/nvm). Each platform service uses a specific version of Node.js.
@@ -58,9 +51,6 @@ At minimum, you need to modify:
 - When switching among the platforms, reinstall the node modules if the runtime supports a different version of Node.js.
 - See the platform-specific notes
 
-## Gotchas
-- Gzipping videos will cause Safari errors in playback. Don't enable gzip unless you don't care about supporting Safari.
-
 # Platform-specific notes
 ## AWS Lambda
 - [Version information](https://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html)
@@ -77,13 +67,12 @@ export AWS_REGION=us-east-1
 export DESTINATION_BUCKET=destination-bucket
 # Note that the following variable is single-quote escaped. Use $KEY_PREFIX to get the filename minus the extension.
 export FFMPEG_ARGS=$'-c:a copy -vf scale=\'min(320\\,iw):-2\' -movflags +faststart -metadata description=http://my.site/$KEY_PREFIX.mp4 out.mp4 -vf thumbnail -vf scale=\'min(320\\,iw):-2\' -vframes 1 out.png'
-export USE_GZIP=false
 export MIME_TYPES='{"png":"image/png","mp4":"video/mp4"}'
 export VIDEO_MAX_DURATION='30'
 export SSE="aws:kms" # or "aes256" if you want to put the video into an encrypted bucket
 export SSE_KEY_ID="some kms key id" # if SSE="aws:kms" you must provide this key id too
 # Node version
-nvm use 6.10 # This is subject to change
+nvm use 14 # This is subject to change
 # Babel-node test script
 node node_modules/babel-cli/bin/babel-node.js test/aws.js
 ```
@@ -105,7 +94,6 @@ export SOURCE_BUCKET=source-bucket
 export DESTINATION_BUCKET=destination-bucket
 # Note that the following variable is single-quote escaped. Use $KEY_PREFIX to get the filename minus the extension.
 export FFMPEG_ARGS=$'-c:a copy -vf scale=\'min(320\\,iw):-2\' -movflags +faststart -metadata description=http://my.site/$KEY_PREFIX.mp4 out.mp4 -vf thumbnail -vf scale=\'min(320\\,iw):-2\' -vframes 1 out.png'
-export USE_GZIP=false # can be true or false
 export MIME_TYPES='{"png":"image/png","mp4":"video/mp4"}' # must be a JSON object with "extension": "mimeType" as the key/value pairs
 export VIDEO_MAX_DURATION='30' # must be a number
 ```

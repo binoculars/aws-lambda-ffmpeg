@@ -1,3 +1,12 @@
+# 4.0.0
+- Add CDK support
+- Localstack support for testing
+- Rewrite with TypeScript
+- Dropped support for non-AWS providers
+- Use Docker
+- Add Docker Lock
+- Use gts for code style
+
 # 3.2.0
 - Travis
   - Install latest yarn

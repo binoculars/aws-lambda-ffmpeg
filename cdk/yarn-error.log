@@ -1,0 +1,62 @@
+Arguments: 
+  /Users/barrett/.nvm/versions/node/v14.2.0/bin/node /usr/local/Cellar/yarn/1.22.5/libexec/bin/yarn.js init
+
+PATH: 
+  /Users/barrett/.nvm/versions/node/v14.2.0/bin:/Users/barrett/.nvm/versions/node/v14.2.0/bin:/Users/barrett/.cargo/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/barrett/.nvm/versions/node/v14.2.0/bin:/Users/barrett/.cargo/bin:/Users/barrett/.local/bin:/Users/barrett/.local/bin:/Users/barrett/.local/bin
+
+Yarn version: 
+  1.22.5
+
+Node version: 
+  14.2.0
+
+Platform: 
+  darwin x64
+
+Trace: 
+  Error: canceled
+      at Interface.<anonymous> (/usr/local/Cellar/yarn/1.22.5/libexec/lib/cli.js:137009:13)
+      at Interface.emit (events.js:315:20)
+      at Interface._ttyWrite (readline.js:873:16)
+      at ReadStream.onkeypress (readline.js:213:10)
+      at ReadStream.emit (events.js:315:20)
+      at emitKeys (internal/readline/utils.js:335:14)
+      at emitKeys.next (<anonymous>)
+      at ReadStream.onData (readline.js:1140:36)
+      at ReadStream.emit (events.js:315:20)
+      at addChunk (_stream_readable.js:302:12)
+
+npm manifest: 
+  {
+    "name": "cdk",
+    "version": "0.1.0",
+    "bin": {
+      "cdk": "bin/cdk.js"
+    },
+    "scripts": {
+      "build": "tsc",
+      "watch": "tsc -w",
+      "test": "jest",
+      "cdk": "cdk"
+    },
+    "devDependencies": {
+      "@aws-cdk/assert": "1.92.0",
+      "@types/jest": "^26.0.10",
+      "@types/node": "10.17.27",
+      "jest": "^26.4.2",
+      "ts-jest": "^26.2.0",
+      "aws-cdk": "1.92.0",
+      "ts-node": "^9.0.0",
+      "typescript": "~3.9.7"
+    },
+    "dependencies": {
+      "@aws-cdk/core": "1.92.0",
+      "source-map-support": "^0.5.16"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
