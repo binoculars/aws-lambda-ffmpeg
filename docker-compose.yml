@@ -14,6 +14,8 @@ services:
       - ${PORT_WEB_UI-8081}:${PORT_WEB_UI-8081}
     volumes:
       - "${LOCALSTACK_DATA_VOL:-localstack_data_vol}:/tmp/localstack"
+    networks:
+      - overlay
 
   lambda:
     build:
@@ -21,7 +23,14 @@ services:
       target: lambda
     container_name: web
     image: ${REGISTRY_URI:-ghcr.io}/${REPOSITORY_NAME:-binoculars/aws-lambda-ffmepg}:${NAMED_TAG:-latest}
+    environment:
+      ENDPOINT_URL: http://localstack:4566
+    networks:
+      - overlay
 
 volumes:
   localstack_data_vol:
     external: false
+
+networks:
+  overlay:
