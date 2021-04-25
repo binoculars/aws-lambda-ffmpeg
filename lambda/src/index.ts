@@ -11,9 +11,20 @@ type env = {
   FFMPEG_ARGS: string;
   MIME_TYPES: string;
   VIDEO_MAX_DURATION: string;
+  ENDPOINT_URL?: string;
 };
 
-const s3 = new S3({});
+const {
+  DESTINATION_BUCKET,
+  FFMPEG_ARGS,
+  MIME_TYPES,
+  VIDEO_MAX_DURATION,
+  ENDPOINT_URL,
+} = process.env as env;
+
+const opts = ENDPOINT_URL ? { endpoint: ENDPOINT_URL } : {};
+
+const s3 = new S3(opts);
 
 const tempDir = process.env['TEMP'] || os.tmpdir();
 const download = path.join(tempDir, 'download');
@@ -63,13 +74,6 @@ if (!fs.existsSync(outputDir)) {
   fs.mkdirSync(outputDir);
 }
 
-const {
-  DESTINATION_BUCKET,
-  FFMPEG_ARGS,
-  MIME_TYPES,
-  VIDEO_MAX_DURATION,
-} = process.env as env;
-
 const mimeTypes = JSON.parse(MIME_TYPES);
 const videoMaxDuration = +VIDEO_MAX_DURATION;
 
@@ -117,7 +121,7 @@ async function ffprobe(): Promise<void> {
     };
 
     child_process
-      .execFile('/bin/ffprobe', args, opts)
+      .execFile('ffprobe', args, opts)
       .on('error', reject)
       .on('close', cb);
   });
@@ -146,7 +150,7 @@ function ffmpeg(keyPrefix: string): Promise<void> {
     };
 
     child_process
-      .spawn('/bin/ffmpeg', args, opts)
+      .spawn('ffmpeg', args, opts)
       .on('message', (msg) => console.log(msg))
       .on('error', reject)
       .on('close', resolve);
