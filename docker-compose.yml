@@ -18,6 +18,8 @@ services:
       - overlay
 
   lambda:
+    depends_on:
+      - localstack
     build:
       context: ./lambda/
       target: lambda
@@ -27,6 +29,11 @@ services:
       ENDPOINT_URL: http://localstack:4566
     networks:
       - overlay
+
+  cdk:
+    build:
+      context: ./cdk/
+    container_name: cdk
 
 volumes:
   localstack_data_vol:

@@ -5,6 +5,13 @@
 				"name": "node",
 				"tag": "14-alpine",
 				"digest": "ed51af876dd7932ce5c1e3b16c2e83a3f58419d824e366de1f7b00f40c848c40",
+				"dockerfile": "cdk/Dockerfile",
+				"service": "cdk"
+			},
+			{
+				"name": "node",
+				"tag": "14-alpine",
+				"digest": "ed51af876dd7932ce5c1e3b16c2e83a3f58419d824e366de1f7b00f40c848c40",
 				"dockerfile": "lambda/Dockerfile",
 				"service": "lambda"
 			},
