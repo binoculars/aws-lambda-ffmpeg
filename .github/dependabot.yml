@@ -1,0 +1,26 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /cdk
+    schedule:
+      interval: daily
+  - package-ecosystem: npm
+    directory: /lambda
+    schedule:
+      interval: daily
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: daily
+  - package-ecosystem: docker
+    directory: /cdk
+    schedule:
+      interval: daily
+  - package-ecosystem: docker
+    directory: /lambda
+    schedule:
+      interval: daily
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
