@@ -5,15 +5,6 @@
 [![Known Vulnerabilities](https://snyk.io/test/github/binoculars/aws-lambda-ffmpeg/badge.svg)](https://snyk.io/test/github/binoculars/aws-lambda-ffmpeg)
 
 - Master: [![Build Status](https://travis-ci.org/binoculars/aws-lambda-ffmpeg.svg?branch=master)](https://travis-ci.org/binoculars/aws-lambda-ffmpeg)
-- Develop: [![Build Status](https://travis-ci.org/binoculars/aws-lambda-ffmpeg.svg?branch=develop)](https://travis-ci.org/binoculars/aws-lambda-ffmpeg)
-
-The different platforms have different naming conventions for their services. To simplify this, listed below is a *proposed* table of generalized terms that are platform-independent.
-
-| Term | Amazon Web Services | Microsoft Azure | Google Cloud Platform |
-| --- | --- | --- | --- |
-| Function | Lambda Function | Azure Function | Cloud Function |
-| Storage Location | S3 Bucket | Storage Container | GCS Bucket |
-| Storage Path | S3 Key | Blob Name | GCS File |
 
 # Function Process Overview
 1. A video file is uploaded to the source storage location
@@ -64,13 +55,10 @@ At minimum, you need to modify:
 export AWS_ACCESS_KEY_ID=AKIDEXAMPLE
 export AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY
 export AWS_REGION=us-east-1
-export DESTINATION_BUCKET=destination-bucket
 # Note that the following variable is single-quote escaped. Use $KEY_PREFIX to get the filename minus the extension.
 export FFMPEG_ARGS=$'-c:a copy -vf scale=\'min(320\\,iw):-2\' -movflags +faststart -metadata description=http://my.site/$KEY_PREFIX.mp4 out.mp4 -vf thumbnail -vf scale=\'min(320\\,iw):-2\' -vframes 1 out.png'
 export MIME_TYPES='{"png":"image/png","mp4":"video/mp4"}'
 export VIDEO_MAX_DURATION='30'
-export SSE="aws:kms" # or "aes256" if you want to put the video into an encrypted bucket
-export SSE_KEY_ID="some kms key id" # if SSE="aws:kms" you must provide this key id too
 # Node version
 nvm use 14 # This is subject to change
 # Babel-node test script
