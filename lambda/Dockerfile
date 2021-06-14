@@ -4,7 +4,7 @@ ADD ./ ./
 
 RUN yarn --frozen-lockfile
 
-FROM jrottenberg/ffmpeg:4.4-scratch@sha256:53103354c35b0cce609915a698df4c8d974e7d480190306e77d1b1900b04f832 as ffmpeg
+FROM jrottenberg/ffmpeg:4.4-scratch@sha256:b6029c00b4e1215f3639c0637ecde7979960aa65f149b3b38e7d288e29ee24b5 as ffmpeg
 
 FROM public.ecr.aws/lambda/nodejs:14@sha256:f27d6dd719eb33377b43c209f9354d3ecedc11c6f7d6c8af34c09413fd19034f as lambda
 
