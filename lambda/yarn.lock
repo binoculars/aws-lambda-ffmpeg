@@ -842,10 +842,10 @@
   resolved "https://registry.yarnpkg.com/@types/minimist/-/minimist-1.2.1.tgz#283f669ff76d7b8260df8ab7a4262cc83d988256"
   integrity sha512-fZQQafSREFyuZcdWFAExYjBiCL7AUCdgsk80iO0q4yihYYdcIiH28CcuPTGFgLOCC8RlW49GSQxdHwZP+I7CNg==
 
-"@types/node@^14.14.41":
-  version "14.14.41"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.14.41.tgz#d0b939d94c1d7bd53d04824af45f1139b8c45615"
-  integrity sha512-dueRKfaJL4RTtSa7bWeTK1M+VH+Gns73oCgzvYfHZywRCoPSd8EkXBL0mZ9unPTveBn+D9phZBaxuzpwjWkW0g==
+"@types/node@^17.0.1":
+  version "17.0.1"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.1.tgz#88d501e84b6185f6489ecee4ba9e8fcec7f29bb2"
+  integrity sha512-NXKvBVUzIbs6ylBwmOwHFkZS2EXCcjnqr8ZCRNaXBkHAf+3mn/rPcJxwrzuc6movh8fxQAsUUfYklJ/EG+hZqQ==
 
 "@types/normalize-package-data@^2.4.0":
   version "2.4.0"
