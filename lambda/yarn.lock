@@ -827,10 +827,10 @@
   dependencies:
     defer-to-connect "^1.0.1"
 
-"@types/aws-lambda@^8.10.76":
-  version "8.10.76"
-  resolved "https://registry.yarnpkg.com/@types/aws-lambda/-/aws-lambda-8.10.76.tgz#a20191677f1f5e32fe1f26739b1d6fbbea9cf636"
-  integrity sha512-lCTyeRm3NWqSwDnoji0z82Pl0tsOpr1p+33AiNeidgarloWXh3wdiVRUuxEa+sY9S5YLOYGz5X3N3Zvpibvm5w==
+"@types/aws-lambda@^8.10.94":
+  version "8.10.94"
+  resolved "https://registry.yarnpkg.com/@types/aws-lambda/-/aws-lambda-8.10.94.tgz#04c9e20d1c254c663ec293cc84c1197873417386"
+  integrity sha512-Y7Iih+LxURTJ8WTFqLWi2eF0G2oWz/tCkp0EQf0E1ikip1yfNtXOfgeXK3OaKA+/i6fAxvm9L1KPuTj8KBUB0A==
 
 "@types/json-schema@^7.0.3":
   version "7.0.7"
