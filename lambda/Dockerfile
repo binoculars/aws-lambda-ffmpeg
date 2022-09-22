@@ -6,7 +6,7 @@ RUN yarn --frozen-lockfile
 
 FROM jrottenberg/ffmpeg:4.4-scratch@sha256:53103354c35b0cce609915a698df4c8d974e7d480190306e77d1b1900b04f832 as ffmpeg
 
-FROM public.ecr.aws/lambda/nodejs:14@sha256:f27d6dd719eb33377b43c209f9354d3ecedc11c6f7d6c8af34c09413fd19034f as lambda
+FROM public.ecr.aws/lambda/nodejs:16@sha256:9db2ba90229ef62e9ed9408feeac26008acc87349a4f5a0a249f1a35c97e36ee as lambda
 
 ENV LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64
 COPY --from=ffmpeg /bin /bin
