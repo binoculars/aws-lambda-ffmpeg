@@ -1,3 +1,5 @@
+⚠️ This repository is now archived. Please see the [Quipt mediaHandler](https://github.com/quipt/monorepo/tree/master/cloud/aws/lambda/mediaHandler) for a current implementation. ⚠️
+
 > An [AWS Lambda](http://aws.amazon.com/lambda/) function that resizes videos and outputs thumbnails using [FFmpeg](https://www.ffmpeg.org/). This function is meant for short-duration videos. If you need to transcode long videos, check out [AWS Elastic Transcoder](http://aws.amazon.com/elastictranscoder/).
 
 [![Dependency Status](https://david-dm.org/binoculars/aws-lambda-ffmpeg.svg)](https://david-dm.org/binoculars/aws-lambda-ffmpeg)
